@@ -1525,8 +1525,9 @@ int getClauerFilesInDir(char * dirname, char ** clauerPath, unsigned char * ncla
 	else{
 	  snprintf(path,MAX_DEVICE_LEN,"%s/%s",dirname,dirent->d_name);
 	}
-	clauerPath[*nclauersPath]= (char *) malloc(sizeof(char) * (strlen(path) + 1));
-	strncpy(clauerPath[*nclauersPath],path,(strlen(path) + 1));
+	clauerPath[*nclauersPath]= (char *) calloc((strlen(path) + 1),
+                                                   sizeof(char));
+	memcpy(clauerPath[*nclauersPath],path,strlen(path) + 1);
 	//clauerPath[*nclauersPath][strlen(path)]='\0';
 		
 	(*nclauersPath)++;
@@ -1696,9 +1697,7 @@ int IO_EnumClauers ( unsigned char *nDevs, char *devices[IO_MAX_DEVICES], int mo
 	devices[nclauers]= (char *) malloc(sizeof(char) * (strlen(deviceName) + 1));
 	if ( devices[nclauers] == NULL )
 	  break;
-	strncpy(devices[nclauersPath],deviceName, strlen(deviceName)+1);
-      
-      
+	memcpy(devices[nclauersPath],deviceName,strlen(deviceName)+1);
 	nclauers++;
 	nclauersPath++;
       }

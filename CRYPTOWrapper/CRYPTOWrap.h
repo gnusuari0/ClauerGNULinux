@@ -56,6 +56,10 @@ de uso.
 #include <pthread.h>
 #endif
 
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined (LIBRESSL_VERSION_NUMBER)
+#include "openssl-compat.h"
+#endif
+
 #include <string.h>
 #include <time.h>
 

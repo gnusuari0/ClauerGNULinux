@@ -79,7 +79,12 @@ de uso.
 
 
 enum { FUNC_OK,
-FUNC_ERROR };
+       FUNC_ERROR,
+       FUNC_ERROR_IO,
+       FUNC_ERROR_PASS_LENGTH,
+       FUNC_ERROR_SMEM,
+       FUNC_ERROR_PASS_VERIFY
+};
 
 
 
@@ -275,7 +280,7 @@ int FUNC_StartSession ( session_t *s )
 	ret = IO_Open(deviceName, &(s->hClauer), s->type, 0);
 
 	if ( ret != IO_SUCCESS ) {
-		FUNC_SendResult(s->tr, FUNC_ERROR);
+		FUNC_SendResult(s->tr, FUNC_ERROR_IO);
 		snprintf(auxMsg, 512, "Function 1. Trying to open device %s. Returned value: %d", deviceName, ret);
 		LOG_Error(LOG_TO, "%s", auxMsg);
 		return ERR_CLOS;
@@ -292,13 +297,13 @@ int FUNC_StartSession ( session_t *s )
 
 		if ( passLen > 127 ) {	    
 			LOG_Error(LOG_TO, "Passphrase sent by the client greater than 127 characters: %d", passLen);
-			FUNC_SendResult(s->tr, FUNC_ERROR);
+			FUNC_SendResult(s->tr, FUNC_ERROR_PASS_LENGTH);
 			return ERR_CLOS;
 		}
 
 		ret = SMEM_New ( &aux, passLen + 1 );
 		if ( ret != CLOS_SUCCESS ) {
-			FUNC_SendResult(s->tr, FUNC_ERROR);
+			FUNC_SendResult(s->tr, FUNC_ERROR_SMEM);
 
 			LOG_Error(LOG_TO, "Function 1 : %d", ret);
 			return ERR_CLOS;
@@ -336,7 +341,7 @@ int FUNC_StartSession ( session_t *s )
 		switch ( ret ) {
 	case ERR_AUTH_INVALID_PASSPHRASE:
 		SMEM_Free(aux, passLen+1);
-		FUNC_SendResult(s->tr, FUNC_ERROR);
+		FUNC_SendResult(s->tr, FUNC_ERROR_PASS_VERIFY);
 
 		LOG_MsgError(LOG_TO, "Function 1. Invalid passphrase");
 		return ERR_CLOS;
@@ -348,7 +353,7 @@ int FUNC_StartSession ( session_t *s )
 
 	default:
 		SMEM_Free(aux, passLen+1);
-		FUNC_SendResult(s->tr, FUNC_ERROR);
+		FUNC_SendResult(s->tr, FUNC_ERROR_PASS_VERIFY);
 
 		LOG_MsgError(LOG_TO, "Function 1. Verifying clauer's passphrase");
 		return ERR_CLOS;

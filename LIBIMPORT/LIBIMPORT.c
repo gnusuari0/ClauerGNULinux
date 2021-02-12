@@ -641,6 +641,7 @@ BOOL LIBIMPORT_ImportarPKCS12_internal (const char *fileName, const char *pwd, U
 	DWORD tam = 0;
 	BYTE *pkcs12;
 	BOOL vuelta;
+        size_t read = 0;
 
 
 	// printf("CALG_RSA_KEYX= %x\n", CALG_RSA_KEYX);
@@ -672,7 +673,12 @@ BOOL LIBIMPORT_ImportarPKCS12_internal (const char *fileName, const char *pwd, U
 		return FALSE;
 	}
 
-	fread(pkcs12,1,tam,f);
+	read = fread(pkcs12,1,tam,f);
+        if (read < tam) {
+            fclose(f);
+            free(pkcs12);
+            return FALSE;
+        }
 	fclose(f);
 
 	vuelta = LIBIMPORT_ImportarPKCS12deBuffer (pkcs12, tam,pwd, hClauer,  mode, extra_pwd, importarCAs);

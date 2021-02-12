@@ -82,8 +82,10 @@ Slot::Slot(CK_SLOT_ID _id,
     USBCERTS_HANDLE handle;
     unsigned char * dispositivos[MAX_DEVICES];
     int err, nDispositivos, setZero= 0;
+
+    multiCtx = EVP_MD_CTX_new();
     
-	multiSignOp=0; 
+    multiSignOp=0; 
     slotID = _id;
     slotState= CKS_RW_PUBLIC_SESSION;
     
@@ -301,7 +303,7 @@ Slot::~Slot(void)
     CloseHandle(th_id_handle.clauerIdMutex);
 	TerminateThread(thread,0);
 #endif
-
+    EVP_MD_CTX_free(multiCtx);
     delete pClauer;
 }
 
@@ -467,7 +469,7 @@ CK_RV Slot::C_SignInit (CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 	    }
 	    else{
 			multiSignOp=0;
-			EVP_MD_CTX_cleanup(&multiCtx);
+			EVP_MD_CTX_reset(multiCtx);
 		    LOG_Msg(LOG_TO, "Bloqueando mecanísmo");
 			_pMechanism = (CK_MECHANISM_PTR) malloc(sizeof(CK_MECHANISM));
 		 	memcpy(_pMechanism,pMechanism,sizeof(CK_MECHANISM));
@@ -485,10 +487,10 @@ CK_RV Slot::C_Sign (CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignatur
     RSA *RSAKey;
     CK_ULONG longbuffer;
     ClaveRSA *pObjectRSAKey;
-    unsigned char * keyId, * auxBuff, * md;;
-	unsigned long err;
-	unsigned int mdSize;
-	EVP_MD_CTX ctx;
+    unsigned char * keyId, * auxBuff, * md;
+    unsigned long err;
+    unsigned int mdSize;
+    EVP_MD_CTX *ctx;
 
     CK_RV ret;
 	
@@ -576,20 +578,23 @@ CK_RV Slot::C_Sign (CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignatur
 						
 						/* Si nos pasan este mecanismo tenemos que calcular el hash */
 						LOG_Msg(LOG_TO, "Entramos por mecanismo CKM_SHA1_RSA_PKCS.");
-						EVP_MD_CTX_init(&ctx);
-						EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-						EVP_DigestUpdate(&ctx, pData, ulDataLen);
+                                                ctx = EVP_MD_CTX_new();
+						EVP_MD_CTX_init(ctx);
+						EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+						EVP_DigestUpdate(ctx, pData, ulDataLen);
     
 						md= (unsigned char *) malloc(20);
 						if ( !md ){
 							LOG_MsgError(LOG_TO, "No pude reservar memoria para el hash");
+                                                        EVP_MD_CTX_free(ctx);
 							return CKR_FUNCTION_CANCELED;
 						}
       
-						EVP_DigestFinal_ex(&ctx, md, &mdSize);
+						EVP_DigestFinal_ex(ctx, md, &mdSize);
     
 						if ( mdSize != 20 ){
 							LOG_MsgError(LOG_TO, "La longitud del hash SHA1 no son 20 bytes");
+                                                        EVP_MD_CTX_free(ctx);
 							return CKR_FUNCTION_CANCELED;	
 						}
 
@@ -620,7 +625,7 @@ CK_RV Slot::C_Sign (CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignatur
 							LOG_Debug(LOG_TO, "RSA_SIGN: Entrando por *pulSignatureLen >= longbuffer, devolviendo tamaño en *pulSignatureLen= %ld", *pulSignatureLen);
 			
 							free(md);
-							EVP_MD_CTX_cleanup(&ctx);
+                                                        EVP_MD_CTX_free(ctx);
 							LOG_MsgError(LOG_TO, "Saliendo por *pulSignatureLen == -1");
 
 #ifdef OPENSSL_ERR
@@ -695,12 +700,12 @@ CK_RV Slot::C_SignUpdate( CK_BYTE_PTR pPart, CK_ULONG ulPartLen )
 
 		case CKM_SHA1_RSA_PKCS:
 			if (multiSignOp == 0){
-		       EVP_MD_CTX_init(&multiCtx);
-			   EVP_DigestInit_ex(&multiCtx, EVP_sha1(), NULL);
-			   multiSignOp=1;  
+                            EVP_MD_CTX_init(multiCtx);
+                            EVP_DigestInit_ex(multiCtx, EVP_sha1(), NULL);
+                            multiSignOp=1;  
 			}
 
-			EVP_DigestUpdate(&multiCtx, pPart, ulPartLen);
+			EVP_DigestUpdate(multiCtx, pPart, ulPartLen);
 			break;
 		default:
 			/* clean up and mechanism invalid */
@@ -721,7 +726,7 @@ CK_RV Slot::C_SignFinal( CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen )
 	unsigned char * keyId, * auxBuff, * md;;
 	unsigned long err;
 	unsigned int mdSize;
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 	CK_RV ret;
 
 	if ( multiSignOp==0 || !_pMechanism ){
@@ -781,7 +786,7 @@ CK_RV Slot::C_SignFinal( CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen )
 				return CKR_FUNCTION_CANCELED;
 			}
 
-			EVP_DigestFinal_ex(&multiCtx, md, &mdSize);
+			EVP_DigestFinal_ex(multiCtx, md, &mdSize);
 
 			if ( mdSize != 20 ){
 				LOG_MsgError(LOG_TO, "La longitud del hash SHA1 no son 20 bytes");
@@ -798,7 +803,7 @@ CK_RV Slot::C_SignFinal( CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen )
 			if ( *pulSignatureLen == -1 ){	
 				LOG_Debug(LOG_TO, "RSA_SIGN: Entrando por *pulSignatureLen >= longbuffer, devolviendo tamaño en *pulSignatureLen= %ld", *pulSignatureLen);
 				free(md);
-				EVP_MD_CTX_cleanup(&multiCtx);
+				EVP_MD_CTX_reset(multiCtx);
 				LOG_MsgError(LOG_TO, "Saliendo por *pulSignatureLen == -1");
 
 #ifdef OPENSSL_ERR
@@ -873,12 +878,12 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
     CK_BYTE * mod, * exp;
     CK_ULONG mod_size, exp_size;
     unsigned char * md;;
-	unsigned long err;
-	unsigned int mdSize;
+    unsigned long err;
+    unsigned int mdSize;
 	
-	EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 	
-	CK_RV ret= CKR_OK;
+    CK_RV ret= CKR_OK;
 
     unsigned char * plainData;
        
@@ -933,15 +938,17 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 
 
     RSA * rsa= RSA_new();
+    const BIGNUM * rsa_n, *rsa_e;
+    RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
 
-    if (! (rsa->n = BN_bin2bn(mod, mod_size, NULL)) ){
+    if (! (rsa_n = BN_bin2bn(mod, mod_size, NULL)) ){
 		LOG_MsgError(LOG_TO, "Al pasar el modulo a BN");
 		free(_pMechanism);
 		_pMechanism = NULL;
 		return CKR_FUNCTION_FAILED;
     }
 
-    if (! (rsa->e = BN_bin2bn(exp, exp_size, NULL)) ){
+    if (! (rsa_e = BN_bin2bn(exp, exp_size, NULL)) ){
 		LOG_MsgError(LOG_TO, "Al pasar el exponente a BN");
 		free(_pMechanism);
 		_pMechanism = NULL;
@@ -990,26 +997,26 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 		/* Resumimos los datos */
 		LOG_Msg(LOG_TO, "Entramos por mecanismo CKM_SHA1_RSA_PKCS.");
 		
-		EVP_MD_CTX_init(&ctx);
-		EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-		EVP_DigestUpdate(&ctx, pData, ulDataLen);
+		EVP_MD_CTX_init(ctx);
+		EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+		EVP_DigestUpdate(ctx, pData, ulDataLen);
     
 		md= (unsigned char *) malloc(20);
 		if ( !md ){
 			LOG_MsgError(LOG_TO, "No pude reservar memoria para el hash");
 			ret= CKR_FUNCTION_CANCELED;
 			free(md);
-			EVP_MD_CTX_cleanup(&ctx);
+			EVP_MD_CTX_reset(ctx);
 			goto end_C_Verify;
 		}
       
-		EVP_DigestFinal_ex(&ctx, md, &mdSize);
+		EVP_DigestFinal_ex(ctx, md, &mdSize);
   
 		if ( mdSize != 20 ){
 			LOG_MsgError(LOG_TO, "La longitud del hash SHA1 no son 20 bytes");
 			ret= CKR_FUNCTION_CANCELED;
 			free(md);
-			EVP_MD_CTX_cleanup(&ctx);
+			EVP_MD_CTX_reset(ctx);
 			goto end_C_Verify;
 		}
 		
@@ -1018,7 +1025,7 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 			LOG_MsgError(LOG_TO, "Descifrando.");
 			ret= CKR_FUNCTION_FAILED;
 			free(md);
-			EVP_MD_CTX_cleanup(&ctx);
+			EVP_MD_CTX_reset(ctx);
 			goto end_C_Verify;
 		}
 		LOG_Debug(LOG_TO,"Los datos descifrados tienen una longitud de %d", plainData_size);
@@ -1027,7 +1034,7 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 			LOG_Msg(LOG_TO, "Firma incorrecta resultado descifrado < 33 .");
 			ret= CKR_SIGNATURE_INVALID;
 			free(md);
-			EVP_MD_CTX_cleanup(&ctx);
+			EVP_MD_CTX_reset(ctx);
 			goto end_C_Verify;
 		}
 
@@ -1039,7 +1046,7 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 				LOG_Msg(LOG_TO, "Firma incorrecta resultado descifrado < 35 .");
 				ret= CKR_SIGNATURE_INVALID;
 				free(md);
-				EVP_MD_CTX_cleanup(&ctx);
+				EVP_MD_CTX_reset(ctx);
 				goto end_C_Verify;
 			}
 			for (i=0; i<15; i++){
@@ -1047,7 +1054,7 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 					LOG_Msg(LOG_TO, "Parseando la estructura asn1.");
 					ret= CKR_SIGNATURE_INVALID;
 					free(md);
-					EVP_MD_CTX_cleanup(&ctx);
+					EVP_MD_CTX_reset(ctx);
 					goto end_C_Verify;
 				}
 			}
@@ -1059,7 +1066,7 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 					LOG_Msg(LOG_TO, "Parseando la estructura asn1.");
 					ret= CKR_SIGNATURE_INVALID;
 					free(md);
-					EVP_MD_CTX_cleanup(&ctx);
+					EVP_MD_CTX_reset(ctx);
 					goto end_C_Verify;
 				}
 			}
@@ -1075,14 +1082,14 @@ CK_RV Slot::C_Verify(	CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 			ret= CKR_SIGNATURE_INVALID;
 		}
 		free(md);
-		EVP_MD_CTX_cleanup(&ctx);
+		EVP_MD_CTX_reset(ctx);
 	}
 
     // Concluimos la operacion de verificación
 
 end_C_Verify:
-
-	free(_pMechanism);
+    EVP_MD_CTX_free(ctx);
+    free(_pMechanism);
     free(plainData);
     _pMechanism = NULL;
     RSA_free(rsa);

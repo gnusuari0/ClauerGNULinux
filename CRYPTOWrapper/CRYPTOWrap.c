@@ -248,7 +248,7 @@ int CRYPTO_PBE_Descifrar ( char * password,
 {
 
   X509_ALGOR *alg = NULL;
-  EVP_CIPHER_CTX ctx;
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   unsigned char *iv;
   int tamSalida, auxTam;
   EVP_CIPHER *cipher = NULL;
@@ -283,38 +283,43 @@ int CRYPTO_PBE_Descifrar ( char * password,
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
-  EVP_CIPHER_CTX_init(&ctx);
+  EVP_CIPHER_CTX_init(ctx);
   
-  if ( !EVP_PBE_CipherInit(alg->algorithm, password, strlen(password), alg->parameter, &ctx, CRYPTO_DESCIFRAR) ) {
+  if ( !EVP_PBE_CipherInit(alg->algorithm, password, strlen(password), alg->parameter, ctx, CRYPTO_DESCIFRAR) ) {
     OPENSSL_free(iv);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
-  EVP_CIPHER_CTX_set_padding(&ctx, padding);
+  EVP_CIPHER_CTX_set_padding(ctx, padding);
   
-  if ( !EVP_CipherInit_ex(&ctx, NULL, NULL, NULL, iv, CRYPTO_DESCIFRAR) ) {
+  if ( !EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, CRYPTO_DESCIFRAR) ) {
     OPENSSL_free(iv);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
   
-  if ( !EVP_CipherUpdate(&ctx, bloqueDescifrado, &auxTam, bloqueCifrado, tamBloqueCifrado) ) {
+  if ( !EVP_CipherUpdate(ctx, bloqueDescifrado, &auxTam, bloqueCifrado, tamBloqueCifrado) ) {
     OPENSSL_free(iv);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
   
-  if ( ! EVP_CipherFinal_ex(&ctx, bloqueDescifrado + auxTam, &tamSalida) ) {
+  if ( ! EVP_CipherFinal_ex(ctx, bloqueDescifrado + auxTam, &tamSalida) ) {
     OPENSSL_free(iv);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
 
   (*tamBloqueDescifrado) = auxTam + tamSalida;
   
-  EVP_CIPHER_CTX_cleanup(&ctx);
+  EVP_CIPHER_CTX_cleanup(ctx);
+  EVP_CIPHER_CTX_free(ctx);
 
   OPENSSL_free(iv);
   iv = NULL;
@@ -373,7 +378,7 @@ int CRYPTO_PBE_Cifrar ( char * password,
                         unsigned char *bloqueCifrado,  int *tamBloqueCifrado )
 {
   X509_ALGOR *alg = NULL;
-  EVP_CIPHER_CTX ctx;
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   int tamSalida, auxTam;
 
   unsigned char *iv = NULL;
@@ -404,38 +409,43 @@ int CRYPTO_PBE_Cifrar ( char * password,
     goto finCRYPTO_PBE_Cifrar;
   }
 
-  EVP_CIPHER_CTX_init(&ctx);
+  EVP_CIPHER_CTX_init(ctx);
 
-  if ( !EVP_PBE_CipherInit(alg->algorithm, password, strlen(password), alg->parameter, &ctx, CRYPTO_CIFRAR) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( !EVP_PBE_CipherInit(alg->algorithm, password, strlen(password), alg->parameter, ctx, CRYPTO_CIFRAR) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     ret = ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
     goto finCRYPTO_PBE_Cifrar;
   }
 
-  EVP_CIPHER_CTX_set_padding(&ctx, padding);
+  EVP_CIPHER_CTX_set_padding(ctx, padding);
 
-  if ( !EVP_CipherInit_ex(&ctx, NULL, NULL, NULL, iv, CRYPTO_CIFRAR) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( !EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, CRYPTO_CIFRAR) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     ret = ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
     goto finCRYPTO_PBE_Cifrar;
   }
 
 
-  if ( !EVP_CipherUpdate(&ctx, bloqueCifrado, &auxTam, bloqueClaro, tamBloqueClaro) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( !EVP_CipherUpdate(ctx, bloqueCifrado, &auxTam, bloqueClaro, tamBloqueClaro) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     ret = ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
     goto finCRYPTO_PBE_Cifrar;
   }
 
-  if ( ! EVP_CipherFinal_ex(&ctx, bloqueCifrado + auxTam, &tamSalida) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( ! EVP_CipherFinal_ex(ctx, bloqueCifrado + auxTam, &tamSalida) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     ret = ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
     goto finCRYPTO_PBE_Cifrar;
   }
 
   (*tamBloqueCifrado) = tamSalida + auxTam;
 
-  EVP_CIPHER_CTX_cleanup(&ctx);
+  EVP_CIPHER_CTX_cleanup(ctx);
+  EVP_CIPHER_CTX_free(ctx);
 
 finCRYPTO_PBE_Cifrar:
 
@@ -472,8 +482,13 @@ finCRYPTO_PBE_Cifrar:
 
 int CRYPTO_Random ( int bytes,  unsigned char *bufferRandom)
 {
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined (LIBRESSL_VERSION_NUMBER)
+  int res = RAND_pseudo_bytes(bufferRandom, bytes);
+#else
+  int res = RAND_bytes(bufferRandom, bytes);
+#endif
 
-  if ( ! RAND_pseudo_bytes(bufferRandom, bytes) )
+  if ( ! res )
     return ERR_CW_SI;
 
   return ERR_CW_NO;
@@ -629,14 +644,21 @@ int CRYPTO_GenerarParLlaves ( char * password,  int bits,
 
   RSA *rsaLlave = NULL;
   BIO *bioMem = NULL;
-
+  int res = 1;
   /*
    * A generar...
    */
 
+#if (OPENSSL_VERSION_NUMBER < 0x00908000L)
   rsaLlave = RSA_generate_key(bits, 3, NULL, NULL);
+#else
+  BIGNUM* e = BN_new();
+  BN_set_word(e, 3);
+  res = RSA_generate_key_ex(rsaLlave, bits, e, NULL);
+  BN_clear_free(e);
+#endif
 
-  if ( !rsaLlave )
+  if ( !rsaLlave || !res )
     return ERR_CW_SI;
 
   /*
@@ -921,7 +943,7 @@ int OSSL_PasswordCallback (char *buf, int size, int rwflag, void *userdata)
   tamPassword = strlen((char *)pwd);
   size = ( tamPassword >= size ) ? size : tamPassword;
 
-  strncpy(buf, (char *)pwd, size);
+  memcpy(buf, (char *)pwd, size);
 
   return (tamPassword > size) ? size : tamPassword;
 
@@ -1309,7 +1331,7 @@ int CRYPTO_ParsePKCS12 ( unsigned char *pkcs12,  unsigned long tamPkcs12,  char 
 int CRYPTO_Cifrar ( CRYPTO_KEY *cryptoKey,  int padding,  int algoritmo,  unsigned char *bloqueClaro, 
     int tamBloqueClaro,  unsigned char *bloqueCifrado,  int *tamBloqueCifrado)
 {
-  EVP_CIPHER_CTX ctx;
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   int tamSalida, auxTam;
 
   unsigned char *iv;
@@ -1330,30 +1352,33 @@ int CRYPTO_Cifrar ( CRYPTO_KEY *cryptoKey,  int padding,  int algoritmo,  unsign
   for ( i = 0 ; i < EVP_CIPHER_iv_length(cipher) ; i++ )
     iv[i] = 0;
 
-  EVP_CIPHER_CTX_init(&ctx);
+  EVP_CIPHER_CTX_init(ctx);
 
-  if ( !EVP_CipherInit_ex(&ctx, cipher, NULL, cryptoKey->llavePrivada, iv, CRYPTO_CIFRAR) ) {
+  if ( !EVP_CipherInit_ex(ctx, cipher, NULL, cryptoKey->llavePrivada, iv, CRYPTO_CIFRAR) ) {
     OPENSSL_free(iv);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
-  EVP_CIPHER_CTX_set_padding(&ctx, padding);
+  EVP_CIPHER_CTX_set_padding(ctx, padding);
 
-  if ( !EVP_CipherUpdate(&ctx, bloqueCifrado, &auxTam, bloqueClaro, tamBloqueClaro) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( !EVP_CipherUpdate(ctx, bloqueCifrado, &auxTam, bloqueClaro, tamBloqueClaro) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(iv);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
-  if ( ! EVP_CipherFinal_ex(&ctx, bloqueCifrado + auxTam, &tamSalida) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( ! EVP_CipherFinal_ex(ctx, bloqueCifrado + auxTam, &tamSalida) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(iv);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
   (*tamBloqueCifrado) = tamSalida + auxTam;
 
-  EVP_CIPHER_CTX_cleanup(&ctx);
+  EVP_CIPHER_CTX_cleanup(ctx);
+  EVP_CIPHER_CTX_free(ctx);
 
   OPENSSL_free(iv);
   iv = NULL;
@@ -1398,7 +1423,7 @@ int CRYPTO_Cifrar ( CRYPTO_KEY *cryptoKey,  int padding,  int algoritmo,  unsign
 int CRYPTO_Descifrar ( CRYPTO_KEY *cryptoKey,  int padding,  int algoritmo,  unsigned char *bloqueCifrado, 
     int tamBloqueCifrado,  unsigned char *bloqueDescifrado,  int *tamBloqueDescifrado)
 {
-  EVP_CIPHER_CTX ctx;
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   unsigned char *iv;
   int tamSalida, auxTam;
   int i;
@@ -1428,31 +1453,35 @@ int CRYPTO_Descifrar ( CRYPTO_KEY *cryptoKey,  int padding,  int algoritmo,  uns
   for ( i = 0 ; i < EVP_CIPHER_iv_length(cipher) ; i++ )
     iv[i] = 0;
 
-  EVP_CIPHER_CTX_init(&ctx);
+  EVP_CIPHER_CTX_init(ctx);
 
-  if ( !EVP_CipherInit_ex(&ctx, cipher, NULL, cryptoKey->llavePrivada, iv, CRYPTO_DESCIFRAR) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( !EVP_CipherInit_ex(ctx, cipher, NULL, cryptoKey->llavePrivada, iv, CRYPTO_DESCIFRAR) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(iv);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
-  EVP_CIPHER_CTX_set_padding(&ctx, padding);
+  EVP_CIPHER_CTX_set_padding(ctx, padding);
 
-  if ( !EVP_CipherUpdate(&ctx, bloqueDescifrado, &auxTam, bloqueCifrado, tamBloqueCifrado) ) {
+  if ( !EVP_CipherUpdate(ctx, bloqueDescifrado, &auxTam, bloqueCifrado, tamBloqueCifrado) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(iv);
-    EVP_CIPHER_CTX_cleanup(&ctx);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
-  if ( ! EVP_CipherFinal_ex(&ctx, bloqueDescifrado + auxTam, &tamSalida) ) {
-    EVP_CIPHER_CTX_cleanup(&ctx);
+  if ( ! EVP_CipherFinal_ex(ctx, bloqueDescifrado + auxTam, &tamSalida) ) {
+    EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(iv);
     return ERR_CW_IMPOSIBLE_DESCIFRAR_BLOQUE;
   }
 
   (*tamBloqueDescifrado) = auxTam + tamSalida;
 
-  EVP_CIPHER_CTX_cleanup(&ctx);
+  EVP_CIPHER_CTX_cleanup(ctx);
+  EVP_CIPHER_CTX_free(ctx);
 
   OPENSSL_free(iv);
   iv = NULL;
@@ -1612,10 +1641,12 @@ int CRYPTO_EVPPKEY_Id (EVP_PKEY *evp, unsigned char id[20])
 {
   int tamE, tamN, resto = 0;
   unsigned char *e,*n;
+  const BIGNUM *rsa_e, *rsa_n;
 
-  EVP_MD_CTX mdCtx;
-
-  tamE = BN_num_bytes(evp->pkey.rsa->e);
+  EVP_MD_CTX *mdCtx = EVP_MD_CTX_new();
+  RSA* rsa = EVP_PKEY_get0_RSA(evp);
+  RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
+  tamE = BN_num_bytes(rsa_e);
 
   if ( tamE < 4 ) {
     resto = 4-tamE;
@@ -1626,15 +1657,15 @@ int CRYPTO_EVPPKEY_Id (EVP_PKEY *evp, unsigned char id[20])
   if ( !e )
     return ERR_CW_SI;
   memset(e, 0, tamE);
-  BN_bn2bin(evp->pkey.rsa->e, e+resto);
+  BN_bn2bin(rsa_e, e+resto);
 
-  tamN = BN_num_bytes(evp->pkey.rsa->n);
+  tamN = BN_num_bytes(rsa_n);
   n = (unsigned char *) malloc (tamN);
   if ( !n ) {
     free(e);
     return ERR_CW_SI;
   }
-  BN_bn2bin(evp->pkey.rsa->n, n);
+  BN_bn2bin(rsa_n, n);
 
   /* Pasamos a little endian */
 
@@ -1643,17 +1674,17 @@ int CRYPTO_EVPPKEY_Id (EVP_PKEY *evp, unsigned char id[20])
 
   /* Calculamos el id */
 
-  EVP_MD_CTX_init(&mdCtx);
+  EVP_MD_CTX_init(mdCtx);
 
-  if  (!EVP_DigestInit_ex(&mdCtx, EVP_sha1(), NULL) ) {
-    EVP_MD_CTX_cleanup(&mdCtx);
+  if  (!EVP_DigestInit_ex(mdCtx, EVP_sha1(), NULL) ) {
+    EVP_MD_CTX_free(mdCtx);
     free(n);
     free(e);
     return ERR_CW_SI;
   }
 
-  if ( !EVP_DigestUpdate(&mdCtx, n, tamN) ) {
-    EVP_MD_CTX_cleanup(&mdCtx);
+  if ( !EVP_DigestUpdate(mdCtx, n, tamN) ) {
+    EVP_MD_CTX_free(mdCtx);
     free(n);
     free(e);
     return ERR_CW_SI;
@@ -1661,20 +1692,20 @@ int CRYPTO_EVPPKEY_Id (EVP_PKEY *evp, unsigned char id[20])
 
   free(n);
 
-  if ( !EVP_DigestUpdate(&mdCtx, e, tamE) ) {
-    EVP_MD_CTX_cleanup(&mdCtx);
+  if ( !EVP_DigestUpdate(mdCtx, e, tamE) ) {
+    EVP_MD_CTX_free(mdCtx);
     free(e);
     return ERR_CW_SI;
   }
 
   free(e);
 
-  if ( !EVP_DigestFinal_ex(&mdCtx, id, NULL) ) {
-    EVP_MD_CTX_cleanup(&mdCtx);
+  if ( !EVP_DigestFinal_ex(mdCtx, id, NULL) ) {
+    EVP_MD_CTX_free(mdCtx);
     return ERR_CW_SI;
   }
 
-  EVP_MD_CTX_cleanup(&mdCtx);
+  EVP_MD_CTX_free(mdCtx);
 
   return ERR_CW_NO;
 }
@@ -2584,6 +2615,9 @@ int CRYPTO_LLAVE2BLOB (unsigned char *llavePrivada, unsigned long tamLlavePrivad
     unsigned long *tamBlob)
 {
   EVP_PKEY *evpLlave;
+  RSA * rsa;
+  const BIGNUM *rsa_n, *rsa_e, *rsa_d, *rsa_p, *rsa_q, *rsa_dmp1, *rsa_dmq1,
+      *rsa_iqmp;
   long tamN, resto=0;
   unsigned char *aux;
 
@@ -2592,8 +2626,13 @@ int CRYPTO_LLAVE2BLOB (unsigned char *llavePrivada, unsigned long tamLlavePrivad
 
   if ( !evpLlave )
     return 0;
+  rsa = EVP_PKEY_get0_RSA(evpLlave);
 
-  tamN = BN_num_bytes(evpLlave->pkey.rsa->n);
+  RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+  RSA_get0_factors(rsa, &rsa_p, &rsa_q);
+  RSA_get0_crt_params(rsa, &rsa_dmp1, &rsa_dmq1, &rsa_iqmp);
+
+  tamN = BN_num_bytes(rsa_n);
 
   *tamBlob = sizeof(BLOBHEADER) + 
     sizeof(RSAPUBKEY) + 
@@ -2609,7 +2648,7 @@ int CRYPTO_LLAVE2BLOB (unsigned char *llavePrivada, unsigned long tamLlavePrivad
 
   memset(blob,0,*tamBlob);
 
-  tamN = BN_num_bytes(evpLlave->pkey.rsa->n);
+  tamN = BN_num_bytes(rsa_n);
 
   ((BLOBHEADER *) blob)->bType = PRIVATEKEYBLOB;
   ((BLOBHEADER *) blob)->bVersion = 0x02;
@@ -2621,43 +2660,42 @@ int CRYPTO_LLAVE2BLOB (unsigned char *llavePrivada, unsigned long tamLlavePrivad
   ((RSAPUBKEY *) blob)->bitlen = tamN*8;
 
   ((RSAPUBKEY *) blob)->pubexp = 0;
-  BN_bn2bin(evpLlave->pkey.rsa->e,(unsigned char *) &(((RSAPUBKEY *) blob)->pubexp));
+  BN_bn2bin(rsa_e,(unsigned char *) &(((RSAPUBKEY *) blob)->pubexp));
   CRYPTO_ByteOrder((unsigned char *) &(((RSAPUBKEY *) blob)->pubexp),
-      BN_num_bytes(evpLlave->pkey.rsa->e));
+      BN_num_bytes(rsa_e));
 
   blob += sizeof(RSAPUBKEY);
 
-  BN_bn2bin(evpLlave->pkey.rsa->n, blob);
+  BN_bn2bin(rsa_n, blob);
   CRYPTO_ByteOrder(blob, tamN);
   blob += tamN;
-
-  resto = tamN/2 - BN_num_bytes(evpLlave->pkey.rsa->p);
-  BN_bn2bin(evpLlave->pkey.rsa->p, blob+resto);
+  resto = tamN/2 - BN_num_bytes(rsa_p);
+  BN_bn2bin(rsa_p, blob+resto);
   CRYPTO_ByteOrder(blob, tamN/2);
   blob += tamN/2;
 
-  resto = tamN/2 - BN_num_bytes(evpLlave->pkey.rsa->q);
-  BN_bn2bin(evpLlave->pkey.rsa->q, blob+resto);
+  resto = tamN/2 - BN_num_bytes(rsa_q);
+  BN_bn2bin(rsa_q, blob+resto);
   CRYPTO_ByteOrder(blob,tamN/2);
   blob += tamN/2;
 
-  resto = tamN/2 - BN_num_bytes(evpLlave->pkey.rsa->dmp1);
-  BN_bn2bin(evpLlave->pkey.rsa->dmp1, blob+resto);
+  resto = tamN/2 - BN_num_bytes(rsa_dmp1);
+  BN_bn2bin(rsa_dmp1, blob+resto);
   CRYPTO_ByteOrder(blob,tamN/2);
   blob += tamN/2;
 
-  resto = tamN/2 - BN_num_bytes(evpLlave->pkey.rsa->dmq1);
-  BN_bn2bin(evpLlave->pkey.rsa->dmq1, blob+resto);
+  resto = tamN/2 - BN_num_bytes(rsa_dmq1);
+  BN_bn2bin(rsa_dmq1, blob+resto);
   CRYPTO_ByteOrder(blob,tamN/2);
   blob += tamN/2;
 
-  resto = tamN/2 - BN_num_bytes(evpLlave->pkey.rsa->iqmp);
-  BN_bn2bin(evpLlave->pkey.rsa->iqmp, blob+resto);
+  resto = tamN/2 - BN_num_bytes(rsa_iqmp);
+  BN_bn2bin(rsa_iqmp, blob+resto);
   CRYPTO_ByteOrder(blob,tamN/2);
   blob += tamN/2;
 
-  resto = tamN - BN_num_bytes(evpLlave->pkey.rsa->d);
-  BN_bn2bin(evpLlave->pkey.rsa->d, blob+resto);
+  resto = tamN - BN_num_bytes(rsa_d);
+  BN_bn2bin(rsa_d, blob+resto);
   CRYPTO_ByteOrder(blob,tamN);
 
   EVP_PKEY_free(evpLlave);
@@ -3279,6 +3317,8 @@ int CRYPTO_BLOB2LLAVE ( unsigned char *blob, unsigned long tamBlob,
 	                    unsigned char *llave, unsigned long *tamLlave )
 {
   RSA *pKey = NULL;
+  BIGNUM *pKey_n, *pKey_e, *pKey_d, *pKey_p, *pKey_q, *pKey_dmp1,
+      *pKey_dmq1, *pKey_iqmp;
   RSAPUBKEY *rsaPubKey;
   BIO *bioMem = NULL;
   unsigned char *auxBlob = NULL;
@@ -3329,53 +3369,58 @@ int CRYPTO_BLOB2LLAVE ( unsigned char *blob, unsigned long tamBlob,
     goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->n = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY), rsaPubKey->bitlen/8, NULL);
-  if ( ! pKey->n ) {
-    ret = 1;
-    goto finCRYPTO_BLOB2LLAVE;
-  }
- 
-  pKey->e = BN_bin2bn((unsigned char *) &(rsaPubKey->pubexp), sizeof(DWORD), NULL);
-  if ( ! pKey->e ) {
+  pKey_n = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY), rsaPubKey->bitlen/8, NULL);
+  if ( ! pKey_n ) {
     ret = 1;
     goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->d = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8+5*rsaPubKey->bitlen/16, rsaPubKey->bitlen/8, NULL);
-  if ( ! pKey->d ) {
+  pKey_e = BN_bin2bn((unsigned char *) &(rsaPubKey->pubexp), sizeof(DWORD), NULL);
+  if ( ! pKey_e ) {
     ret = 1;
     goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->p = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8, rsaPubKey->bitlen/16, NULL);
-  if ( ! pKey->p ) {
+  pKey_d = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8+5*rsaPubKey->bitlen/16, rsaPubKey->bitlen/8, NULL);
+  if ( ! pKey_d ) {
+    ret = 1;
+    goto finCRYPTO_BLOB2LLAVE;
+  }
+
+  pKey_p = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8, rsaPubKey->bitlen/16, NULL);
+  if ( ! pKey_p ) {
 	ret = 1;
 	goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->q = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8+rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
-  if ( ! pKey->q ) {
+  pKey_q = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8+rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
+  if ( ! pKey_q ) {
     ret = 1;
     goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->dmp1 = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8 + 2*rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
-  if ( ! pKey->dmp1 ) {
+  pKey_dmp1 = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8 + 2*rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
+  if ( ! pKey_dmp1 ) {
     ret = 1;
     goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->dmq1 = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8 + 3*rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
-  if ( ! pKey->dmq1 ) {
+  pKey_dmq1 = BN_bin2bn(auxBlob+sizeof(BLOBHEADER)+sizeof(RSAPUBKEY)+rsaPubKey->bitlen/8 + 3*rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
+  if ( ! pKey_dmq1 ) {
     ret = 1;
     goto finCRYPTO_BLOB2LLAVE;
   }
 
-  pKey->iqmp = BN_bin2bn(auxBlob + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + rsaPubKey->bitlen/8 + 4*rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
-  if ( ! pKey->iqmp ) {
+  pKey_iqmp = BN_bin2bn(auxBlob + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + rsaPubKey->bitlen/8 + 4*rsaPubKey->bitlen/16, rsaPubKey->bitlen/16, NULL);
+  if ( ! pKey_iqmp ) {
     ret = 1;
     goto finCRYPTO_BLOB2LLAVE;
   }
+
+  RSA_set0_key(pKey, pKey_n, pKey_e, pKey_d);
+  RSA_set0_factors(pKey, pKey_p, pKey_q);
+  RSA_set0_crt_params(pKey, pKey_dmp1, pKey_dmq1, pKey_iqmp);
+
 
   /* Y ahora vamos a por PEM
    */
@@ -3491,7 +3536,7 @@ endCRYPTO_X509_DER2PEM:
 int CRYPTO_X509_FingerPrint    ( unsigned char *certPEM, unsigned long tam, int mdAlg, unsigned char *fingerPrint )
 {
 	X509 *x = NULL;
-	EVP_MD *md;
+	const EVP_MD *md;
 	unsigned int len;
 	int ret = 0;
 

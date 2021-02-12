@@ -189,7 +189,7 @@ class Slot
 
 	//For SignInit, SignUpdate and SignFinal 
 	int multiSignOp; 
-    EVP_MD_CTX multiCtx;
+    EVP_MD_CTX *multiCtx;
 #ifdef LINUX
     pthread_t thread;
 #elif defined(WIN32)

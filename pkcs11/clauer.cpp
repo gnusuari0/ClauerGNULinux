@@ -73,6 +73,7 @@ de uso.
 
 
 
+
 #ifdef WIN32
 
 #ifdef CLUI
@@ -1063,12 +1064,13 @@ CK_RV Clauer::_insertCertificateObjectAndPublicKey( unsigned char * block, lista
   /* Necesitamos el módulo y el exponente público */
   unsigned char * mod, * pex;
   int m_size, pex_size;
-    
+  const BIGNUM *pRSA_n, *pRSA_e;
+  RSA_get0_key(pRSA, &pRSA_n, &pRSA_e, NULL);
   // TODO: Some control and test of this 
   // Here we put a leading zero to assure that every application interprets 
   // the module as a positive unsigned big integer
-  m_size= BN_num_bytes(pRSA->n) + 1;
-  pex_size= BN_num_bytes(pRSA->e);
+  m_size= BN_num_bytes(pRSA_n) + 1;
+  pex_size= BN_num_bytes(pRSA_e);
 
 
   mod= (unsigned char * ) malloc(m_size);
@@ -1078,11 +1080,11 @@ CK_RV Clauer::_insertCertificateObjectAndPublicKey( unsigned char * block, lista
 
   mod[0]= 0;
 
-  if (! BN_bn2bin(pRSA->n, mod+1)){
+  if (! BN_bn2bin(pRSA_n, mod+1)){
     return CKR_FUNCTION_FAILED;
   }
     
-  if (! BN_bn2bin(pRSA->e, pex)){
+  if (! BN_bn2bin(pRSA_e, pex)){
     return CKR_FUNCTION_FAILED;
   }
        
@@ -1383,23 +1385,25 @@ CK_RV Clauer::_insertPublicKeyObject( RSA * rsa, unsigned char * identificador, 
 
   unsigned char *mod, *pex;
   int m_size, pex_size, atributos;
+  const BIGNUM *rsa_n, *rsa_e;
+  RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
     
   // TODO: Some control and test of this 
   // Here we put a leading zero to assure that every application interprets 
   // the module as a positive unsigned big integer
   //Sleep(5);
-  m_size= BN_num_bytes(rsa->n) + 1;
-  pex_size= BN_num_bytes(rsa->e);
+  m_size= BN_num_bytes(rsa_n) + 1;
+  pex_size= BN_num_bytes(rsa_e);
 
   mod= (unsigned char * ) malloc(m_size);
   pex= (unsigned char * ) malloc(pex_size);
     
   mod[0]= 0;
-  if (! BN_bn2bin(rsa->n, mod+1)){
+  if (! BN_bn2bin(rsa_n, mod+1)){
     return CKR_FUNCTION_FAILED;
   }
     
-  if (! BN_bn2bin(rsa->e, pex)){
+  if (! BN_bn2bin(rsa_e, pex)){
     return CKR_FUNCTION_FAILED;
   }
     
@@ -1562,10 +1566,11 @@ unsigned char * _getIdFromCertificate(unsigned char * cert, int tam ){
     
     
   EVP_PKEY *pk;
-  EVP_MD_CTX ctx;
+  EVP_MD_CTX *ctx = EVP_MD_CTX_new();
   unsigned char *n;
   unsigned long tamN;
   unsigned int mdSize;
+  const BIGNUM *pk_rsa_n;
 	           
   icert = (unsigned char *) malloc(tam);
   memcpy(icert, cert, tam);
@@ -1577,6 +1582,7 @@ unsigned char * _getIdFromCertificate(unsigned char * cert, int tam ){
     
   if (! bp ){
     free(icert);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "Creando un bio desde un buffer de memoria");
     return NULL;
   }
@@ -1585,26 +1591,31 @@ unsigned char * _getIdFromCertificate(unsigned char * cert, int tam ){
   if ( ! xCert ){	
     free(icert);
     BIO_free(bp);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "Leyendo estructura x509 desde el BIO");
     return NULL;
   }
     
   pk= NULL;
-  pk = X509_get_pubkey(xCert);    
+  pk = X509_get_pubkey(xCert);
   if ( ! pk ){
     free(icert);
     BIO_free(bp);
     X509_free(xCert);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "Obteninedo llave publica");
     return NULL;
   }
 
-  tamN= BN_num_bytes(pk->pkey.rsa->n);
+  pk_rsa_n = RSA_get0_n(EVP_PKEY_get0_RSA(pk));
+
+  tamN= BN_num_bytes(pk_rsa_n);
   if ( tamN == 0 ){
     free(icert);
     BIO_free(bp);
     X509_free(xCert);
     EVP_PKEY_free(pk);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "Convirtiendo el módulo a BN");
     return NULL;
   }
@@ -1615,25 +1626,27 @@ unsigned char * _getIdFromCertificate(unsigned char * cert, int tam ){
     BIO_free(bp);
     X509_free(xCert);
     EVP_PKEY_free(pk);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "Convirtiendo el módulo a BN");
     return NULL;
   }
     
-  BN_bn2bin(pk->pkey.rsa->n, n);
+  BN_bn2bin(pk_rsa_n, n);
     
   if ( tamN == 0 ){
     free(icert);
     BIO_free(bp);
     X509_free(xCert);
     EVP_PKEY_free(pk);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "Convirtiendo el módulo a BN");
     return NULL;
   }
     
     
-  EVP_MD_CTX_init(&ctx);
-  EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-  EVP_DigestUpdate(&ctx, n, tamN);
+  EVP_MD_CTX_init(ctx);
+  EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+  EVP_DigestUpdate(ctx, n, tamN);
     
   md= (unsigned char *) malloc(20);
   if ( !md ){
@@ -1641,20 +1654,20 @@ unsigned char * _getIdFromCertificate(unsigned char * cert, int tam ){
     BIO_free(bp);
     X509_free(xCert);
     EVP_PKEY_free(pk);
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "No pude reservar memoria para el hash");
     return NULL;
   }
     
     
-  EVP_DigestFinal_ex(&ctx, md, &mdSize);
+  EVP_DigestFinal_ex(ctx, md, &mdSize);
     
   if ( mdSize != 20 ){
     free(icert);
     BIO_free(bp);
     X509_free(xCert);
     EVP_PKEY_free(pk);
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_free(ctx);
     LOG_MsgError(LOG_TO, "La longitud del hash SHA1 no son 20 bytes");
     return NULL;	
   }
@@ -1664,7 +1677,7 @@ unsigned char * _getIdFromCertificate(unsigned char * cert, int tam ){
   BIO_free(bp);
   X509_free(xCert);
   EVP_PKEY_free(pk);
-  EVP_MD_CTX_cleanup(&ctx);
+  EVP_MD_CTX_free(ctx);
       
     
   return md;
@@ -1709,11 +1722,11 @@ RSA * _getRSAkeyFromBlock(unsigned char * key, int tam){
 unsigned char * _getIdFromPrivateKey(RSA * rKey){ //(unsigned char * key, int tam){
    
   unsigned char * md;
-  EVP_MD_CTX ctx;
+  EVP_MD_CTX *ctx;
   unsigned char *n;
   unsigned long tamN;
   unsigned int mdSize;
-	
+  const BIGNUM *rKey_n;
 
   OpenSSL_add_all_algorithms();
 
@@ -1721,9 +1734,9 @@ unsigned char * _getIdFromPrivateKey(RSA * rKey){ //(unsigned char * key, int ta
     LOG_MsgError(LOG_TO, "Parámetro incorrecto");
     return NULL;
   }
+  rKey_n = RSA_get0_n(rKey);
     
-    
-  tamN= BN_num_bytes(rKey->n);
+  tamN= BN_num_bytes(rKey_n);
 
   if ( tamN == 0 ){
     LOG_MsgError(LOG_TO, "Convirtiendo el módulo a BN");
@@ -1736,27 +1749,29 @@ unsigned char * _getIdFromPrivateKey(RSA * rKey){ //(unsigned char * key, int ta
     return NULL;
   }
     
-  BN_bn2bin(rKey->n, n);
+  BN_bn2bin(rKey_n, n);
     
-    
-  EVP_MD_CTX_init(&ctx);
-  EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-  EVP_DigestUpdate(&ctx, n, tamN);
+  ctx = EVP_MD_CTX_new();
+  EVP_MD_CTX_init(ctx);
+  EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+  EVP_DigestUpdate(ctx, n, tamN);
     
   md= (unsigned char *) malloc(20);
   if ( !md ){
     LOG_MsgError(LOG_TO, "No pude reservar memoria para el hash");
+    EVP_MD_CTX_free(ctx);
     return NULL;
   }
     
     
-  EVP_DigestFinal_ex(&ctx, md, &mdSize);
+  EVP_DigestFinal_ex(ctx, md, &mdSize);
     
   if ( mdSize != 20 ){
     LOG_MsgError(LOG_TO, "La longitud del hash SHA1 no son 20 bytes");
+    EVP_MD_CTX_free(ctx);
     return NULL;	
   }
-
+  EVP_MD_CTX_free(ctx);
   return md;
 }
 
@@ -1832,7 +1847,7 @@ CK_RV Clauer::LoadClauerObjects( listaObjetos * pListaObjetos  )
 	    
 	    
       if ( cka_id == NULL ){
-	snprintf(aux, 512, "NO se pudo insertar X509Cert: %d::%s:%s:%s", nBlock, 
+	snprintf(aux, 512, "NO se pudo insertar X509Cert: %ld::%s:%s:%s", nBlock, 
 		 BLOQUE_CERTPROPIO_Get_FriendlyName(_block),_subject->CN, _issuer->CN); 
 	LOG_Error(LOG_TO,"%s", aux);
 	continue;
@@ -1845,7 +1860,7 @@ CK_RV Clauer::LoadClauerObjects( listaObjetos * pListaObjetos  )
 						     NULL, BLOQUE_CERTPROPIO_Get_Id( _block ), 
 						     &label, 1 ) != CKR_OK ){
 	      
-			snprintf(aux, 512, "Inserting certificate X509Cert: %d::%s:%s:%s", nBlock, 
+			snprintf(aux, 512,"Inserting certificate X509Cert: %ld::%s:%s:%s", nBlock, 
 		    BLOQUE_CERTPROPIO_Get_FriendlyName(_block),_subject->CN, _issuer->CN); 
 	      
 	      LOG_Error(LOG_TO,"%s", aux);
@@ -2398,7 +2413,7 @@ CK_RV Clauer::C_CreateObject(
     case CKO_PRIVATE_KEY:  
 
       rsa= RSA_new();	
-
+      BIGNUM *rsa_n, *rsa_e, *rsa_d, *rsa_p, *rsa_q, *rsa_dmp1, *rsa_dmq1, *rsa_iqmp;
       for (i=0; i< ulCount; i++) {
 
 	switch (pTemplate[i].type){
@@ -2410,17 +2425,18 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 
 	case CKA_MODULUS: // n
-	  rsa->n= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->n ){
+	  rsa_n = BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_n ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum modulo para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;
-	  }		    
+	  }
+          
 	  break;
 		    
 	case CKA_PUBLIC_EXPONENT: // e  
-	  rsa->e= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->e ){
+	  rsa_e= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_e ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum exponente público para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;
@@ -2428,8 +2444,8 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 		    
 	case CKA_PRIVATE_EXPONENT: // d 
-	  rsa->d= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->d ){
+	  rsa_d= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_d ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum exponente público para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;
@@ -2437,8 +2453,8 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 
 	case CKA_PRIME_1: // p
-	  rsa->p= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->p ){
+	  rsa_p= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_p ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum p para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;
@@ -2446,8 +2462,8 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 
 	case CKA_PRIME_2: // q
-	  rsa->q= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->q ){
+	  rsa_q= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_q ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum q para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;
@@ -2455,8 +2471,8 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 		    
 	case CKA_EXPONENT_1: // d mod (p-1)
-	  rsa->dmp1= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->dmp1 ){
+	  rsa_dmp1= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_dmp1 ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum  d mod (p-1) para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;						
@@ -2464,8 +2480,8 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 		    
 	case CKA_EXPONENT_2: // d mod (q-1)
-	  rsa->dmq1= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->dmq1 ){
+	  rsa_dmq1= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_dmq1 ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum  d mod (q-1) para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;												
@@ -2473,8 +2489,8 @@ CK_RV Clauer::C_CreateObject(
 	  break;
 		    
 	case CKA_COEFFICIENT: // q^-1 mod p
-	  rsa->iqmp= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
-	  if ( ! rsa->iqmp ){
+	  rsa_iqmp= BN_bin2bn((const unsigned char *)pTemplate[i].pValue, pTemplate[i].ulValueLen, NULL);
+	  if ( ! rsa_iqmp ){
 	    LOG_MsgError(LOG_TO,"No se pudo crear bignum  q^-1 mod p para la llave privada\n");
 	    RSA_free(rsa);
 	    return CKR_FUNCTION_FAILED;														       
@@ -2483,6 +2499,9 @@ CK_RV Clauer::C_CreateObject(
 	}//switch
       }//for
 
+      RSA_set0_key(rsa, rsa_n, rsa_e, rsa_d);
+      RSA_set0_factors(rsa, rsa_p, rsa_q);
+      RSA_set0_crt_params(rsa, rsa_dmp1, rsa_dmq1, rsa_iqmp);
       return _insertOpensslRsaKeyObject(rsa, pListaObjetos, cka_id, cka_id_size, phObject, realId, NULL, 0);
 
       break;
@@ -3135,8 +3154,15 @@ CK_RV Clauer::C_GenerateKeyPair( CK_SESSION_HANDLE    hSession,                 
 
     RAND_seed(buff, 4096);
 #endif 
-
+#if (OPENSSL_VERSION_NUMBER < 0x00908000L)
     rsa= RSA_generate_key(pbk_mod_bits, pbk_exponent, NULL, NULL);
+#else
+    BIGNUM* BN_pbk_exponent = BN_new();
+    int res = 0;
+    BN_set_word(BN_pbk_exponent, pbk_exponent);
+    res = RSA_generate_key_ex(rsa, pbk_mod_bits, BN_pbk_exponent, NULL);
+    BN_clear_free(BN_pbk_exponent);
+#endif
   }
   else{	
     if ( pvk_mod_bits > pMechanism_keyGen->get_ulMaxKeySize() || 
@@ -3145,8 +3171,15 @@ CK_RV Clauer::C_GenerateKeyPair( CK_SESSION_HANDLE    hSession,                 
       return CKR_ATTRIBUTE_VALUE_INVALID; 
 	    
     }
-
-    rsa= RSA_generate_key(pvk_mod_bits, pbk_exponent, NULL, NULL);
+#if (OPENSSL_VERSION_NUMBER < 0x00908000L)
+    rsa= RSA_generate_key(pvk_mod_bits, pvk_exponent, NULL, NULL);
+#else
+    BIGNUM* BN_pvk_exponent = BN_new();
+    int res = 0;
+    BN_set_word(BN_pvk_exponent, pvk_exponent);
+    res = RSA_generate_key_ex(rsa, pvk_mod_bits, BN_pvk_exponent, NULL);
+    BN_clear_free(BN_pvk_exponent);
+#endif
   }
     
     

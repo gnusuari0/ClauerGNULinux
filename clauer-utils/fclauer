@@ -124,7 +124,7 @@ fi
 
 total=$(( $(fdisk -s $dev)*1024 )) #tam del disp en bytes
 #tam=$(( $(fdisk -s $dev)*1024 /1000 /1000 )) #tam del disp en MB
-tamB=$(LC_ALL=C fdisk -l $dev | grep ", [0-9]* bytes" | sed "s/.*, \([0-9]*\) bytes/\1/g")
+tamB=$(LC_ALL=C fdisk -l $dev | grep ", [0-9]* bytes" | sed -r "s/.*, ([0-9]*) bytes.*/\1/g")
 tam=$(($tamB/1000/1000))
 
 echo "tamanyo= $tam tamB= $tamB" 
@@ -206,7 +206,7 @@ done
 if [ "$IS_UTF8" = "0" ]; then
   info "Calculando geometría óptima \nesta operación puede tardar unos segundos ..."
 else
-  info "Calculando geometrÃ­a Ã³ptima \nesta operaciÃ³n puede tardar unos segundos ..."
+  info "Calculando geometría óptima \nesta operación puede tardar unos segundos ..."
 fi
 
 #CHS=$(sfdisk -g $dev)
@@ -220,7 +220,7 @@ dd if=/dev/zero of=$dev bs=512 count=1 1>/dev/null 2>/dev/null
 sync 
 
 ### 
-# Calculo de la geometrï¿½ ï¿½tima:
+# Calculo de la geometría óptima:
 #
 BytesPorSector=$(LC_ALL=C fdisk -l $dev 2>/dev/null | grep "\* [0-9]* = [0-9]* bytes" | sed "s/.*\* \([0-9]*\) = [0-9]* bytes/\1/")
 sectors=1
@@ -234,11 +234,11 @@ tob=0
 hob=0
 sob=0
 
-while (( $found==0  && $sectors<=64 )); do
+while (( $found==0 && $sectors<=64 )); do
   headers=1
-  #echo "$BytesPorSector*$headers*$sectors*$cylinders";
-  while (( $found==0 && $headers<=256 )); do 
-      tt=$(($BytesPorSector*$headers*$sectors*$cylinders));
+  while (( $found==0 && $headers<=256 )); do
+      #echo "$BytesPorSector*$headers*$sectors*$cylinders";
+      tt=$(($BytesPorSector*$headers*$sectors*$cylinders))
       if (( $tt>$to && $tt<=$tamB )); then 
 	  to=$tt;
 	  ho=$headers;
@@ -259,11 +259,11 @@ while (( $found==0  && $sectors<=64 )); do
     sectors=$((sectors + 1));
 done
 
-if (( $found==0 )){
+if (( $found==0 )); then
   to=$tob;
   ho=$hob;
   so=$sob;
-}
+fi
 
 #
 ####

@@ -67,6 +67,8 @@ de uso.
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <time.h>
+
 #define MSGTIMEOUT       5
 #define SOCKET          int
 #define INVALID_SOCKET  -1

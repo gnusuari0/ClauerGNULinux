@@ -325,7 +325,7 @@ CK_RV C_GetSlotList(
     //      the application.
   
     
-    //snprintf(aux, 512, "pulCount=%d tokenPresent=%d",*pulCount, tokenPresent); 
+    //snprintf(aux, 512, "pulCount=%ld tokenPresent=%d",*pulCount, tokenPresent); 
     //LOG_Debug(LOG_TO,"%s", aux); 
 
     if ( pSlotList == NULL_PTR ){
@@ -391,7 +391,7 @@ CK_RV C_GetMechanismList(
 {
     char aux[512];
 
-    snprintf(aux, 512, "slotID=%d, ... , pulCount=%d ",slotID, *pulCount);
+    snprintf(aux, 512, "slotID=%ld, ... , pulCount=%ld ",slotID, *pulCount);
     LOG_Debug(LOG_TO,"%s", aux);
 
     return slotClauer->C_GetMechanismList (pMechanismList,pulCount);
@@ -402,7 +402,7 @@ CK_RV C_GetMechanismList(
 CK_RV C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR pInfo)
 {
     
-    LOG_Debug(LOG_TO,"slotID= %d ... ",slotID); 
+    LOG_Debug(LOG_TO,"slotID= %ld ... ",slotID); 
 
     return slotClauer->C_GetMechanismInfo(type, pInfo);
 }
@@ -578,7 +578,7 @@ CK_RV C_CopyObject(
 {
     char aux[512];
         
-    snprintf(aux, 512, "C_CopyObject(hSession=%d, hObject=%d, ..., ulCount=%d, ...) Call ",hSession,hObject,ulCount);
+    snprintf(aux, 512, "C_CopyObject(hSession=%ld, hObject=%ld, ..., ulCount=%ld, ...) Call ",hSession,hObject,ulCount);
   
     LOG_Debug(LOG_TO, "%s", aux);
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -594,7 +594,7 @@ CK_RV C_DestroyObject(
     char aux[512];
 
     /* That function should be implemented just in case of CreateObject failure */
-    snprintf(aux,512,"C_DestroyObject(hSession=%d, hObject=%d) Call ",hSession,hObject); 
+    snprintf(aux,512,"C_DestroyObject(hSession=%ld, hObject=%ld) Call ",hSession,hObject); 
     LOG_Debug(LOG_TO,"%s",aux);
     //return CKR_FUNCTION_NOT_SUPPORTED;
 	return slotClauer->C_DestroyObject(hSession, hObject);
@@ -610,7 +610,7 @@ CK_RV C_GetObjectSize(
 {
     char aux[512];
 
-    snprintf(aux,512,"C_GetObjectSize(hSession=%d, hObject=%d, ...) Call ",hSession,hObject); 
+    snprintf(aux,512,"C_GetObjectSize(hSession=%ld, hObject=%ld, ...) Call ",hSession,hObject); 
     LOG_Debug(LOG_TO,"%s",aux);
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
@@ -625,7 +625,7 @@ CK_RV C_GetAttributeValue(
 			  )
 {
     char aux[512];
-    snprintf(aux,512,"hSession= %d, hObject= %d, ..., ulCount= %d ", hSession, hObject, ulCount); 
+    snprintf(aux,512,"hSession= %ld, hObject= %ld, ..., ulCount= %ld ", hSession, hObject, ulCount); 
     LOG_Debug(LOG_TO,"%s",aux);
     return slotClauer->C_GetAttributeValue(hObject, pTemplate, ulCount); 
 }
@@ -640,7 +640,7 @@ CK_RV C_SetAttributeValue(
 			  )
 {
     char aux[512];
-    snprintf(aux,512,"C_SetAttributeValue(hSession=%d, hObject=%d, ..., ulCount=%d) Call ",hSession,hObject,ulCount);   
+    snprintf(aux,512,"C_SetAttributeValue(hSession=%ld, hObject=%ld, ..., ulCount=%ld) Call ",hSession,hObject,ulCount);   
     LOG_Debug(LOG_TO,"%s",aux);
     return CKR_OK;
     
@@ -670,7 +670,7 @@ CK_RV C_FindObjectsInit(
 
     char aux[512];
 	
-    snprintf(aux,512,"(hSession=%d, ..., ulCount=%d) ",hSession, ulCount); 
+    snprintf(aux,512,"(hSession=%ld, ..., ulCount=%ld) ",hSession, ulCount); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return slotClauer->C_FindObjectsInit(pTemplate, ulCount);
@@ -687,7 +687,7 @@ CK_RV C_FindObjects(
 {
     char aux[512];
 	
-    snprintf(aux,512,"C_FindObjects(hSession=%d, ..., ulMaxObjectCount=%d, ...) Call ",hSession, ulMaxObjectCount); 
+    snprintf(aux,512,"C_FindObjects(hSession=%ld, ..., ulMaxObjectCount=%ld, ...) Call ",hSession, ulMaxObjectCount); 
   
     LOG_Debug(LOG_TO,"%s",aux);
     return slotClauer->C_FindObjects(phObject, ulMaxObjectCount, pulObjectCount);
@@ -698,7 +698,7 @@ CK_RV C_FindObjects(
 CK_RV C_FindObjectsFinal(CK_SESSION_HANDLE hSession)
 {
   
-    LOG_Debug(LOG_TO,"C_FindObjectsFinal(hSession=%d) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_FindObjectsFinal(hSession=%ld) Call ",hSession); 
     return slotClauer->C_FindObjectsFinal();
 }
 
@@ -713,7 +713,7 @@ CK_RV C_EncryptInit(
     // TODO: Not supported at first version but it must be supported.
     char aux[512];
 
-    snprintf(aux,512,"C_EncryptInit(hSession=%d, ..., hkey=%d) Call ",hSession, hKey); 
+    snprintf(aux,512,"C_EncryptInit(hSession=%ld, ..., hkey=%ld) Call ",hSession, hKey); 
     LOG_Debug(LOG_TO,aux,512);
     
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -732,7 +732,7 @@ CK_RV C_Encrypt(
     // TODO: Not supported at first version but it must be supported.
     char aux[512];
 
-    snprintf(aux,512,"C_EncryptInit(hSession=%d, ..., ulDataLen=%d, ...) Call ",hSession, ulDataLen); 
+    snprintf(aux,512,"C_EncryptInit(hSession=%ld, ..., ulDataLen=%ld, ...) Call ",hSession, ulDataLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -751,7 +751,7 @@ CK_RV C_EncryptUpdate(
 
     char aux[512];
 
-    snprintf(aux,512,"C_EncryptUpdate(hSession=%d, ..., ulPartLen=%d) Call ",hSession, ulPartLen); 
+    snprintf(aux,512,"C_EncryptUpdate(hSession=%ld, ..., ulPartLen=%ld) Call ",hSession, ulPartLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -767,7 +767,7 @@ CK_RV C_EncryptFinal(
 {
   
 
-    LOG_Debug(LOG_TO,"C_EncryptFinal(hSession=%d, ...) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_EncryptFinal(hSession=%ld, ...) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -782,7 +782,7 @@ CK_RV C_DecryptInit(
 
     char aux[512];
 
-    snprintf(aux,512,"C_DecryptInit(hSession=%d, ..., hKey=%d) Call ",hSession,hKey); 
+    snprintf(aux,512,"C_DecryptInit(hSession=%ld, ..., hKey=%ld) Call ",hSession,hKey); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return slotClauer->C_DecryptInit(pMechanism, hKey);
@@ -801,7 +801,7 @@ CK_RV C_Decrypt(
   
     char aux[512];
 
-    snprintf(aux,512,"C_Decrypt(hSession=%d, ..., ulEncryptedDataLen=%d, ...) Call ",hSession,ulEncryptedDataLen); 
+    snprintf(aux,512,"C_Decrypt(hSession=%ld, ..., ulEncryptedDataLen=%ld, ...) Call ",hSession,ulEncryptedDataLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return slotClauer->C_Decrypt( pEncryptedData, ulEncryptedDataLen, pData, pulDataLen );
@@ -820,7 +820,7 @@ CK_RV C_DecryptUpdate(
 		
     char aux[512];
 
-    snprintf(aux,512,"C_DecryptUpdate(hSession=%d, ..., ulEncryptedPartLen=%d, ...) Call ",hSession,ulEncryptedPartLen); 
+    snprintf(aux,512,"C_DecryptUpdate(hSession=%ld, ..., ulEncryptedPartLen=%ld, ...) Call ",hSession,ulEncryptedPartLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -835,7 +835,7 @@ CK_RV C_DecryptFinal(
 		     )
 {
   
-    LOG_Debug(LOG_TO,"C_DecryptFinal(hSession=%d, ...) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_DecryptFinal(hSession=%ld, ...) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -848,7 +848,7 @@ CK_RV C_DigestInit(
 {
     // TODO: No soportada en la version inicial, deberiamos soportarla.
   
-    LOG_Debug(LOG_TO,"C_DigestInit(hSession=%d, ...) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_DigestInit(hSession=%ld, ...) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -865,7 +865,7 @@ CK_RV C_Digest(
 
     char aux[512];
 
-    snprintf(aux,512,"C_Digest(hSession=%d, ..., ulDataLen=%d, ...) Call ",hSession, ulDataLen); 
+    snprintf(aux,512,"C_Digest(hSession=%ld, ..., ulDataLen=%ld, ...) Call ",hSession, ulDataLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -882,7 +882,7 @@ CK_RV C_DigestUpdate(
     
     char aux[512];
 
-    snprintf(aux,512,"C_DigestUpdate(hSession=%d, ..., ulPartLen=%d, ...) Call ",hSession, ulPartLen); 
+    snprintf(aux,512,"C_DigestUpdate(hSession=%ld, ..., ulPartLen=%ld, ...) Call ",hSession, ulPartLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -899,7 +899,7 @@ CK_RV C_DigestKey(
   
     char aux[512];
 
-    snprintf(aux, 512, "C_DigestKey(hSession=%d, hKey=%d, ...) Call ",hSession, hKey); 
+    snprintf(aux, 512, "C_DigestKey(hSession=%ld, hkey=%ld, ...) Call ",hSession, hKey); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -916,7 +916,7 @@ CK_RV C_DigestFinal(
   
     char aux[512];
 
-    snprintf(aux, 512, "C_DigestFinal(hSession=%d, ...) Call ",hSession); 
+    snprintf(aux, 512, "C_DigestFinal(hSession=%ld, ...) Call ",hSession); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -936,7 +936,7 @@ CK_RV C_SignInit(
   
     char aux[512];
 
-    snprintf(aux, 512, "C_SignInit(hSession=%d, ...,hKey=%d) Call ",hSession,hKey); 
+    snprintf(aux, 512, "C_SignInit(hSession=%ld, ...,hkey=%ld) Call ",hSession,hKey); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return slotClauer->C_SignInit(pMechanism, hKey);
@@ -955,7 +955,7 @@ CK_RV C_Sign(
 
     char aux[512];
 
-    snprintf(aux, 512, "C_Sign(hSession=%d, ...,ulDataLen=%d, ...) Call ",hSession,ulDataLen); 
+    snprintf(aux, 512, "C_Sign(hSession=%ld, ...,ulDataLen=%ld, ...) Call ",hSession,ulDataLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return slotClauer->C_Sign( pData, ulDataLen, pSignature, pulSignatureLen );
@@ -973,7 +973,7 @@ CK_RV C_SignUpdate(
 	
     char aux[512];
 
-    snprintf(aux, 512, "C_SignUpdate(hSession=%d, ...,ulPartLen=%d) Call ",hSession,ulPartLen); 
+    snprintf(aux, 512, "C_SignUpdate(hSession=%ld, ...,ulPartLen=%ld) Call ",hSession,ulPartLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     //return CKR_FUNCTION_NOT_SUPPORTED;
@@ -992,7 +992,7 @@ CK_RV C_SignFinal(
   
     char aux[512];
 
-    snprintf(aux, 512, "C_SignFinal(hSession=%d, ...) Call ",hSession); 
+    snprintf(aux, 512, "C_SignFinal(hSession=%ld, ...) Call ",hSession); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     //return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1011,7 +1011,7 @@ CK_RV C_SignRecoverInit(
     
     char aux[512];
 
-    snprintf(aux, 512, "C_SignRecoverInit(hSession=%d, ..., hKey=%d) Call ",hSession,hKey); 
+    snprintf(aux, 512, "C_SignRecoverInit(hSession=%ld, ..., hkey=%ld) Call ",hSession,hKey); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1030,7 +1030,7 @@ CK_RV C_SignRecover(
     // TODO: Not supported initialy.
     char aux[512];
 
-    snprintf(aux, 512, "C_SignRecover(hSession=%d, ..., ulDataLen=%d, ...) Call ",hSession,ulDataLen); 
+    snprintf(aux, 512, "C_SignRecover(hSession=%ld, ..., ulDataLen=%ld, ...) Call ",hSession,ulDataLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1048,7 +1048,7 @@ CK_RV C_VerifyInit(
    
     char aux[512];
 
-    snprintf(aux,512,"C_VerifyInit(hSession=%d, ..., hKey=%d) Call ",hSession,hKey); 
+    snprintf(aux,512,"C_VerifyInit(hSession=%ld, ..., hkey=%ld) Call ",hSession,hKey); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return slotClauer->C_VerifyInit(hSession, pMechanism, hKey); //CKR_FUNCTION_NOT_SUPPORTED;
@@ -1068,7 +1068,7 @@ CK_RV C_Verify(
     
     char aux[512];
 
-    snprintf(aux,512,"C_Verify(hSession=%d, ..., ulDataLen=%d, ...) Call ",hSession,ulDataLen); 
+    snprintf(aux,512,"C_Verify(hSession=%ld, ..., ulDataLen=%ld, ...) Call ",hSession,ulDataLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return  slotClauer->C_Verify(hSession, pData, ulDataLen, pSignature, ulSignatureLen); //CKR_OK;//CKR_FUNCTION_NOT_SUPPORTED;
@@ -1084,7 +1084,7 @@ CK_RV C_VerifyUpdate(
 {
     // TODO: Not supported initialy.
   
-    LOG_Debug(LOG_TO,"C_VerifyUpdate(hSession=%d, ...) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_VerifyUpdate(hSession=%ld, ...) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1099,7 +1099,7 @@ CK_RV C_VerifyFinal(
     // TODO: Not supported initialy.
     char aux[512];
 
-    snprintf(aux,512,"C_VerifyFinal(hSession=%d, ..., ulSignatureLen=%d) Call ",hSession,ulSignatureLen); 
+    snprintf(aux,512,"C_VerifyFinal(hSession=%ld, ..., ulSignatureLen=%ld) Call ",hSession,ulSignatureLen); 
 
     LOG_Debug(LOG_TO,"%s",aux);
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1116,7 +1116,7 @@ CK_RV C_VerifyRecoverInit(
     // TODO: Not supported initialy.
     char aux[512];
 
-    snprintf(aux, 512, "C_VerifyRecoverInit(hSession=%d, ..., hKey=%d) Call ",hSession,hKey);   
+    snprintf(aux, 512, "C_VerifyRecoverInit(hSession=%ld, ..., hkey=%ld) Call ",hSession,hKey);   
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1136,7 +1136,7 @@ CK_RV C_VerifyRecover(
     // TODO: Not supported initialy.
     char aux[512];
 
-    snprintf(aux, 512, "C_VerifyRecover(hSession=%d, ..., ulSignatureLen=%d, ...) Call ",hSession,ulSignatureLen); 
+    snprintf(aux, 512, "C_VerifyRecover(hSession=%ld, ..., ulSignatureLen=%ld, ...) Call ",hSession,ulSignatureLen); 
     LOG_Debug(LOG_TO, "%s", aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1155,7 +1155,7 @@ CK_RV C_DigestEncryptUpdate(
     // TODO: Not supported initialy.
     char aux[512];
 
-    snprintf(aux, 512, "C_DigestEncryptUpdate(hSession=%d, ..., ulPartLen=%d, ...) Call ",hSession,ulPartLen); 
+    snprintf(aux, 512, "C_DigestEncryptUpdate(hSession=%ld, ..., ulPartLen=%ld, ...) Call ",hSession,ulPartLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1175,7 +1175,7 @@ CK_RV C_DecryptDigestUpdate(
   
     char aux[512];
 	
-    snprintf(aux, 512, "C_DecryptDigestUdate(hSession=%d, ..., ulEncryptedPartLen=%d, ...) Call ",hSession,ulEncryptedPartLen); 
+    snprintf(aux, 512, "C_DecryptDigestUdate(hSession=%ld, ..., ulEncryptedPartLen=%ld, ...) Call ",hSession,ulEncryptedPartLen); 
     LOG_Debug(LOG_TO,"%s",512);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1194,7 +1194,7 @@ CK_RV C_SignEncryptUpdate(
     // TODO: Not supported initialy.
     char aux[512];
 	
-    snprintf(aux, 512, "C_SignEncryptUpdate(hSession=%d, ..., ulPartLen=%d, ...) Call ",hSession,ulPartLen);   
+    snprintf(aux, 512, "C_SignEncryptUpdate(hSession=%ld, ..., ulPartLen=%ld, ...) Call ",hSession,ulPartLen);   
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1214,7 +1214,7 @@ CK_RV C_DecryptVerifyUpdate(
 
     char aux[512];
 	
-    snprintf(aux, 512, "C_DecryptVerifyUpdate(hSession=%d, ..., ulEncryptedPartLen=%d, ...) Call ",hSession,ulEncryptedPartLen); 
+    snprintf(aux, 512, "C_DecryptVerifyUpdate(hSession=%ld, ..., ulEncryptedPartLen=%ld, ...) Call ",hSession,ulEncryptedPartLen); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1234,7 +1234,7 @@ CK_RV C_GenerateKey(
   
     char aux[512];
 	
-    snprintf(aux, 512, "C_GenerateKey(hSession=%d, ..., ulCount=%d, ...) Call ",hSession,ulCount); 
+    snprintf(aux, 512, "C_GenerateKey(hSession=%ld, ..., ulCount=%ld, ...) Call ",hSession,ulCount); 
     LOG_Debug(LOG_TO, "%s", aux);
     
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1254,7 +1254,7 @@ CK_RV C_GenerateKeyPair(
 			)
 {
 
-    LOG_Debug(LOG_TO,"C_GenerateKeyPair(hSession=%d, ...) Call ",hSession);     
+    LOG_Debug(LOG_TO,"C_GenerateKeyPair(hSession=%ld, ...) Call ",hSession);     
     return slotClauer->C_GenerateKeyPair( hSession,  pMechanism, pPublicKeyTemplate,  
 					  ulPublicKeyAttributeCount, pPrivateKeyTemplate,      
 					  ulPrivateKeyAttributeCount, phPublicKey, phPrivateKey 
@@ -1276,7 +1276,7 @@ CK_RV C_WrapKey(
   
     char aux[512];
 	
-    snprintf(aux, 512, "C_WrapKey(hSession=%d, ..., hKey=%d, ...) Call ",hSession,hKey); 
+    snprintf(aux, 512, "C_WrapKey(hSession=%ld, ..., hkey=%ld, ...) Call ",hSession,hKey); 
     LOG_Debug(LOG_TO, "%s", aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1297,7 +1297,7 @@ CK_RV C_UnwrapKey(
 {
     // TODO: Not supported initialy.
 
-    LOG_Debug(LOG_TO,"C_UnwrapKey(hSession=%d, ...,) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_UnwrapKey(hSession=%ld, ...,) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1316,7 +1316,7 @@ CK_RV C_DeriveKey(
   
     char aux[512];
 	
-    snprintf(aux, 512, "C_DeriveKey(hSession=%d, ...,hBaseKey=%d, ...) Call ",hSession,hBaseKey); 
+    snprintf(aux, 512, "C_DeriveKey(hSession=%ld, ...,hBaseKey=%ld, ...) Call ",hSession,hBaseKey); 
     LOG_Debug(LOG_TO,"%s",aux);
 
     return CKR_FUNCTION_NOT_SUPPORTED;
@@ -1332,7 +1332,7 @@ CK_RV C_SeedRandom(
 {
     // TODO: Not supported initially, should support it!!
 
-    LOG_Debug(LOG_TO,"C_SeedRandom(hSession=%d, ...) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_SeedRandom(hSession=%ld, ...) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1346,7 +1346,7 @@ CK_RV C_GenerateRandom(
 {
     // TODO: Not supported initially, should support it!!
   
-    LOG_Debug(LOG_TO,"C_GenerateRandom(hSession=%d, ...) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_GenerateRandom(hSession=%ld, ...) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
@@ -1369,7 +1369,7 @@ CK_RV C_CancelFunction(
 {
     // TODO: Not supported initially, should support it!!
   
-    LOG_Debug(LOG_TO,"C_CancelFunction(hSession=%d) Call ",hSession); 
+    LOG_Debug(LOG_TO,"C_CancelFunction(hSession=%ld) Call ",hSession); 
     return CKR_FUNCTION_NOT_SUPPORTED;
 }
 

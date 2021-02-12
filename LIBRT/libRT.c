@@ -668,13 +668,13 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	
 
 	if ( LIBMSG_Conectar(IP, PORTNUMBER, &(handle->sock)) != 0 ) {
-    		// printf("Error no puedo conectar\n");
+    		printf("Error no puedo conectar\n");
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		return ERR_LIBRT_SI;
 	}
 
 	if ( LIBMSG_Enviar(handle->sock, (unsigned char *)&funcion, 1) != 0 ) {
-    		// printf("Error al enviar\n");
+    		printf("Error al enviar\n");
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		LIBMSG_Cerrar(handle->sock);
 		return ERR_LIBRT_SI;
@@ -682,7 +682,7 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	
 	#ifdef NO_CRYF_SUPPORT
 	if ( LIBMSG_Enviar(handle->sock, (unsigned char *)&ndevice, 1) != 0 ) {
-    		// printf("Error al enviar\n");
+    		printf("Error al enviar\n");
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		LIBMSG_Cerrar(handle->sock);
 		return ERR_LIBRT_SI;
@@ -691,7 +691,7 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	len= strlen((char *)device);
 	// We send the size of the string containing the path.
 	if ( LIBMSG_Enviar(handle->sock, (unsigned char *)&len, 4) != 0 ) {
-    		// printf("Error al enviar\n");
+    		printf("Error al enviar\n");
 	    LIBRT_MUTEX_Destruir(handle->mutex);
 	    LIBMSG_Cerrar(handle->sock);
 	    return ERR_LIBRT_SI;
@@ -699,7 +699,7 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	
 	// Sending the device path itself.
 	if ( LIBMSG_Enviar(handle->sock, (unsigned char *)device, len) != 0 ) {
-    		// printf("Error al enviar el path \n");
+    		printf("Error al enviar el path \n");
 	    LIBRT_MUTEX_Destruir(handle->mutex);
 	    LIBMSG_Cerrar(handle->sock);
 	    return ERR_LIBRT_SI;
@@ -716,7 +716,7 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	}
 
 	if ( LIBMSG_Enviar(handle->sock, (unsigned char *)&tamPassword, 1) != 0 ) {
-    		// printf("Error al enviar el tamanyo de la password\n");
+    		printf("Error al enviar el tamanyo de la password\n");
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		LIBMSG_Cerrar(handle->sock);
 		return ERR_LIBRT_SI;
@@ -734,17 +734,18 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	/*
 	 * Respuesta del runtime
 	 */
-	
-	// printf("Recibo respuesta del runtime\n");
+
+
+        printf("Recibo respuesta del runtime\n");
 	if ( LIBMSG_Recibir(handle->sock, (unsigned char *)&err, 1) != 0 ) {
-    		// printf("Error al recibir el error\n");
+    		printf("Error al recibir el error\n");
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		LIBMSG_Cerrar(handle->sock);
 		return ERR_LIBRT_SI;
 	}
 
 	if ( err != 0 ) {
-    		// printf("He recibido un error %d \n Regenerando cache\n",err);
+    		printf("He recibido un error %d \n Regenerando cache\n",err);
 		LIBRT_RegenerarCache();
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		LIBMSG_Cerrar(handle->sock);
@@ -752,7 +753,7 @@ int _LIBRT_IniciarDispositivo ( unsigned char * device, char * pwd, USBCERTS_HAN
 	}
 
 	if ( LIBMSG_Recibir(handle->sock, handle->idDispositivo, 20) != 0 ) {
-		// printf("Error al recibir el id del dispositivo\n");
+		printf("Error al recibir el id del dispositivo\n");
 		LIBRT_MUTEX_Destruir(handle->mutex);
 		LIBMSG_Cerrar(handle->sock);
 		return ERR_LIBRT_SI;
