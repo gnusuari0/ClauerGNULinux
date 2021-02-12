@@ -1,0 +1,4 @@
+lib_LTLIBRARIES = libIMPORT.la
+libIMPORT_la_SOURCES = LIBIMPORT.c  LIBIMPORT.h
+INCLUDES = -O4 -DLINUX -I../ # -DDEBUG
+LIBADD =  ../CRYPTOWrapper/libCRYPTOWrap.la ../LIBRT/libRT.la -lcrypto

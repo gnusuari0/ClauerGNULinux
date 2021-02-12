@@ -1,0 +1,25 @@
+#!/bin/sh
+
+
+if [ -f /etc/clos.conf ]
+then 
+  rm /etc/clos.conf
+fi 
+
+if [ "$(which update-rc.d)" ]
+then 
+        rm -f /etc/init.d/clos
+        update-rc.d -f clos remove 
+
+elif [ -f /etc/redhat-release ]                                                                                                                                                                 
+then                                                                                                                                                                                            
+          chkconfig --del clos  
+else 
+    if [ -f /etc/SuSE-release ]
+    then
+        insserv -r /etc/init.d/clos
+    else  
+        echo "No puedo actualizar los rc, deberas hacerlo de forma manual, mira paul.nisu.org para m¿s info"
+    fi
+fi
+

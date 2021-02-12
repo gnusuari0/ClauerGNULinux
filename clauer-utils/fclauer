@@ -1,0 +1,361 @@
+#!/bin/bash
+
+######################
+#  Global Variables 
+######################
+
+DISPS=''
+NDISPS=0
+tmp=$$$(date +%s)
+dialog='dialog --shadow --cr-wrap --aspect 60 --backtitle clauerFmt-v1.0'
+hald_present=0
+
+
+############################
+# Aux function declaration
+###########################
+
+disps () {
+    for i in a b c d e f g h i j k l s m n o p q r s t u v w;
+      do
+      if  head -c1 /dev/sd$i &>/dev/null
+	  then 
+	  DISPS="$DISPS $NDISPS /dev/sd$i"
+	  NDISPS=$(($NDISPS + 1 ))
+      fi
+    done 
+}
+
+info () {
+  $dialog --infobox "$*" 0 0
+ }
+error () {
+  rm -f $tmp.log
+  rmdir $tmp
+  info "$*"
+
+  if [ $hald_present -eq 1 ];
+  then
+      /usr/sbin/hald 2>/dev/null
+  fi 
+  exit 1
+ }
+cancel () {
+  error Canceled
+ }
+lee3 () {
+  rm -f $tmp.dd
+  touch $tmp.dd
+  ta=$[$1-$(find $tmp.dd -printf %s)]
+  while [ $ta -gt 0 ]; do
+    [ $ta -gt 100000 ] && ta=100000
+    dd ibs=$ta count=1 <&3 2>/dev/null >>$tmp.dd
+    ta=$[$1-$(find $tmp.dd -printf %s)]
+  done
+  cat $tmp.dd
+  rm $tmp.dd
+ }
+
+
+########################
+# Beginig of the program 
+########################
+
+LOCALE=$(locale|head -1)
+IS_UTF8="0";
+
+if [ $(pidof hald) ];
+then 
+  pkill hald* 2>/dev/null;
+  hald_present=1
+fi 
+
+
+if [ "${LOCALE/*./}" = "UTF-8"  ]
+then
+ IS_UTF8="1";
+fi
+
+[ $UID != 0 ] && error Debes ser root!
+
+[ "$(which dialog)" ] && dialog --version >/dev/null 2>&1 || { echo Se requiere '"dialog"' v 0.9 como mï¿½imo, debes instalarlo; exit 1; }
+
+disps 
+exec 4>&1
+
+if [ $NDISPS -eq 0 ]
+    then error No se han encontrado clauers en el sistema!
+else 
+    if [ $NDISPS -eq 1 ]
+	then
+	dev=${DISPS:2}
+    else
+	dev=$( $dialog --menu "Seleciona dispositivo\nRecuerda no extraerlo hasta que el proceso no haya finalizado\n" 0 0 $NDISPS $DISPS 2>&1 >&4 ) || cancel
+	idx=$(expr index "$DISPS" $dev)
+	dev=${DISPS:$(( $idx + 1 )):8}
+    fi
+fi
+
+if [ -x /sbin/sfdisk ]; then
+  sfd=/sbin/sfdisk
+elif [ -x /usr/sbin/sfdisk ]; then
+  sfd=/usr/sbin/sfdisk
+else
+  error No puedo encontrar sfdisk
+fi
+
+
+if [ -x /bin/clmakefs ]; then
+  clmakefs=/bin/clmakefs
+elif [ -x /usr/local/bin/clmakefs ]; then
+  clmakefs=/usr/local/bin/clmakefs
+elif [ -x /usr/bin/clmakefs ]; then
+  clmakefs=/usr/bin/clmakefs
+elif [ -x ./clmakefs ]; then
+  clmakefs=./clmakefs
+else
+  error No puedo encontrar clmakefs puedes descargarlo de www.clauer.uji.es
+fi
+
+		
+ #echo  $dev
+[ "$(dd if=$dev skip=498 ibs=1 count=1 2>/dev/null | hexdump -e '1/1 "%x"')" = 69 ] && dialog --yesno "Parece que el dispositivo ya tiene formato, desea continuar" 0 0 
+
+
+total=$(( $(fdisk -s $dev)*1024 )) #tam del disp en bytes
+#tam=$(( $(fdisk -s $dev)*1024 /1000 /1000 )) #tam del disp en MB
+tamB=$(LC_ALL=C fdisk -l $dev | grep ", [0-9]* bytes" | sed "s/.*, \([0-9]*\) bytes/\1/g")
+tam=$(($tamB/1000/1000))
+
+echo "tamanyo= $tam tamB= $tamB" 
+
+aux=$(( $tam * 4/100  ))  # 4%
+max=$(( $tam * 90/100 ))   # 90%
+min=1                      # 1MB min size
+
+if (( $aux > 5 )); then 
+    aux=5
+fi
+
+cryptosize=$(( $max + 1 ))
+
+
+while (( $cryptosize < $min || $cryptosize > $max )) ; do 
+  if [ "$IS_UTF8" = "0" ]; then 
+  cryptosize=$( dialog --inputbox  "Introduzca el tamaño en MB que quiere dedicar a la partición criptográfica.\n  Tamaño total: $tam MB\n  Tamaño mínimo permitido: 1 MB\n  Tamaño mínimo permitido: $max MB" 0 0 "$aux" 2>&1 >&4 ) || cancel
+  else 
+  cryptosize=$( dialog --inputbox  "Introduzca el tamaÃ±o en MB que quiere dedicar a la particiÃ³n criptogrÃ¡fica.\n  TamaÃ±o total: $tam MB\n  TamaÃ±o mÃ­nimo permitido: 1 MB\n  TamaÃ±o mÃ¡ximo permitido: $max MB" 0 0 "$aux" 2>&1 >&4 ) || cancel
+  fi 
+done	
+
+ap="$dev"1
+mkdir $tmp
+if  x=$(mount $ap $tmp 2>&1); then 
+    if (( $(ls -a1 $tmp| wc -l ) > 2 )); then
+	backup=1
+	used=$(du -s $tmp); used=${used%%	*}
+	touch $tmp.log
+	cua=$[$(cd $tmp; find . | wc -c)+1]
+	act=0; acta=0;
+	(while true; do
+	    [ $act -gt $acta ] && echo $act;
+	    acta=$act
+	    sleep 1
+	    act=$(find $tmp.log -printf %s)
+	    act=$[(act*100/cua)%100]
+	    mount | grep $dev >/dev/null || break
+	    done
+	    echo 100
+	) | $dialog --gauge "Realizando backup of $[used/1024] Mbytes ... " 6 50 &
+	x=$(tar -C $tmp -zcvf $tmp.tgz . >$tmp.log)
+	sal=$?
+    else
+	backup=0
+    fi
+    while ! umount $ap 2>/dev/null; do
+	sleep 1
+    done
+    wait
+else
+    dialog --yesno "Parece que el dispositivo no tiene formato, se va a formatear por completo, desea continuar" 0 0; sal=$?
+    [ $sal -ne 0 ] && cancel 
+fi
+
+msg=
+while true; do
+    while true; do
+	if [ "$IS_UTF8" = "0" ]; then  
+	  pass=$(dialog --insecure  --max-input 32 --passwordbox \
+	    "$msg\nIntroduzca un nuevo password para la zona criptográfica" 10 40 2>&1 >&4); sal=$?
+	else
+	  pass=$(dialog --insecure  --max-input 32 --passwordbox \
+	    "$msg\nIntroduzca un nuevo password para la zona criptogrÃ¡fica" 10 40 2>&1 >&4); sal=$?
+	fi
+	[ $sal -ne 0 ] && cancel 
+	[ ${#pass} -ge 8 ] && break 
+	msg="password demasiado corto!"
+    done
+    pass2=$(dialog --insecure  --max-input 32 --passwordbox \
+	"Vuelva a escribir su password" 10 40 2>&1 >&4); sal=$?
+    [ $sal -ne 0 ] && cancel 
+    [ "$pass" == "$pass2" ] && break
+    msg="Los passwords no coinciden!"
+done
+
+
+if [ "$IS_UTF8" = "0" ]; then
+  info "Calculando geometría óptima \nesta operación puede tardar unos segundos ..."
+else
+  info "Calculando geometrÃ­a Ã³ptima \nesta operaciÃ³n puede tardar unos segundos ..."
+fi
+
+#CHS=$(sfdisk -g $dev)
+#C=$(echo $CHS | sed "s/.*: \([0-9]*\) .*/\1/g")
+#H=$(echo $CHS | sed "s/[^,]*, \([0-9]*\) .*/\1/g")
+#S=$(echo $CHS | sed "s/[^,]*,[^,]*, \([0-9]*\) .*/\1/g")
+
+#Reseteamos el device 
+dev=$(echo $dev|sed "s/  *//g")
+dd if=/dev/zero of=$dev bs=512 count=1 1>/dev/null 2>/dev/null
+sync 
+
+### 
+# Calculo de la geometrï¿½ ï¿½tima:
+#
+BytesPorSector=$(LC_ALL=C fdisk -l $dev 2>/dev/null | grep "\* [0-9]* = [0-9]* bytes" | sed "s/.*\* \([0-9]*\) = [0-9]* bytes/\1/")
+sectors=1
+headers=1
+cylinders=1024
+found=0
+tt=0
+to=0
+tbest=0
+tob=0
+hob=0
+sob=0
+
+while (( $found==0  && $sectors<=64 )); do
+  headers=1
+  #echo "$BytesPorSector*$headers*$sectors*$cylinders";
+  while (( $found==0 && $headers<=256 )); do 
+      tt=$(($BytesPorSector*$headers*$sectors*$cylinders));
+      if (( $tt>$to && $tt<=$tamB )); then 
+	  to=$tt;
+	  ho=$headers;
+	  so=$sectors;
+	  if (( $tt == $tamB )); then
+	      found=1
+	  else 
+	    if (( $tt<$tamB && $tt>$tbest )); then
+		tbest=$tt;
+		tob=$to;
+ 		hob=$ho;
+		sob=$so;
+	    fi
+	  fi
+      fi
+      headers=$((headers + 1));
+    done
+    sectors=$((sectors + 1));
+done
+
+if (( $found==0 )){
+  to=$tob;
+  ho=$hob;
+  so=$sob;
+}
+
+#
+####
+#echo "Obtenidos ho=$ho, so=$so, cyl=$cylinders";
+H=$ho
+S=$so
+
+BytesPorCilindro=$((H*S*$BytesPorSector))
+CilindroFinalDatos=$(( $(($total - $cryptosize*1000*1024))/ $BytesPorCilindro ))
+#echo "CilindroFinalDatos: $CilindroFinalDatos"
+
+info "Escribiendo la tabla de particiones ..."
+#x=$(sfdisk --force $dev <<-EOF 2>&1
+#	0 $CilindroFinalDatos 6
+#	0 0
+#	0 0
+#	,,69
+#	EOF
+#     ) || error "sfdisk:\n$x"
+
+sync
+cmd="n\np\n1\n\n""$CilindroFinalDatos""\nn\np\n4\n\n\nt\n1\nc\nt\n4\n69\nw\n";
+echo -ne "$cmd" | fdisk $dev -C $cylinders -H $H -S $S 1>/dev/null 2>/dev/null
+
+
+info "Formateando la particion de datos  ..."
+sync 
+umount  ${dev}1 2>/dev/null
+
+sleep 1
+ 
+x=$(mkfs.vfat -S ${BytesPorSector} ${dev}1 2>&1 ) || error "mkfs.vfat:\n$x"
+
+if [ "$IS_UTF8" = "0" ]; then 
+  info "Formateando la particion criptográfica  ..."
+else
+  info "Formateando la particion criptogrÃ¡fica  ..."
+fi
+
+sync
+sleep 1
+
+x=$( $clmakefs -d ${dev}4  -p "$pass" 2>&1 ) || error "$clmakefs:\n$x"
+
+sync
+
+totaldatos=$(( $total - $cryptosize*1000*1024 ))
+
+if [ $backup -eq 1 ]; then 
+    if (( $used > $(($totaldatos/1000)) )); then 
+	info "Los datos anteriores no caben en la nueva praticion de datos, sus datos estan en $tmp.tgz"
+	sleep 1
+    else 
+	info "Recuperando datos ... "
+	mount -o sync ${dev}1 $tmp
+	cua=$[$(find $tmp.log -printf %s)+1]
+	act=0; acta=0
+	(while true; do
+	    [ $act -gt $acta ] && echo $act;
+	    sleep 1
+	    acta=$act
+	    act=$[$(cd $tmp; find . -type f | wc -c)]
+	    act=$[(act*100/cua)%100]
+	    mount | grep $dev >/dev/null || break
+	    done
+	echo 100
+	) | $dialog --gauge "Restaurando datos ... " 6 50 &
+	tar -C $tmp -zxpf $tmp.tgz 2>/dev/null 
+	ok=$?
+	while ! umount ${dev}1 2>/dev/null; do
+	    sleep 1
+	done
+	wait
+
+	if [ $ok -eq 0 ]; then
+	    rm -rf $tmp $tmp*
+	else
+	    error "Los datos no se han restaurado correctamente, estan en $tmp.tgz"
+	fi
+    fi
+fi
+rm -rf $tmp $tmp*
+
+if [ $hald_present -eq 1 ];
+  then
+      /usr/sbin/hald 2>/dev/null
+  fi
+
+
+if [ "$IS_UTF8" = "0" ]; then 
+  info "!El formateo finalizó con éxito!"
+else
+  info "El formateo finalizo con Ã©xito!"
+fi
+exit 0

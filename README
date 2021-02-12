@@ -1,0 +1,67 @@
+
+
+    * Nota acerca de la versiÃ³n
+	Esta versiÃ³n es ya estable.
+ 
+    * Compilación
+	(Como root)
+	Para compilar el pkcs11 para el Clauer deberemos efectuar los
+	siguientes pasos:
+
+	$ tar zxvf ClauerLinux-x.y.tar.gz
+	$ cd ClauerLinux-x.ydir
+
+	$ ./configure
+	$ make
+	$ make install
+
+	Esto hará que la librería se instale en nuestro sistema, comunmente en
+	/usr/local/ si no indicamos nada mediante la opción --prefix en el
+	comando configure.
+
+	Al instalarlo por primera vez, el sistema  operativo del clauer no se estará ejecutando,
+	por tanto, la primera vez, es necesario hacer
+	\# /etc/init.d/clos restart
+
+	NOTA 64 bits: Para compilación bajo x86_64, debemos invocar el configure con la 
+		      opciÃ³n --enable-64 para que utilize las bibliotecas bajo /usr/lib64 
+		      y pase una macro al compilador ( x86_64 ) que "normalize" el tipo long. 
+
+
+    * Instalación en Mozilla Firefox y en Mozilla Thunderbird
+	(Como usuario)
+	- Mozilla Firefox
+
+	    Para instalar el módulo en Mozilla Firefox ejecuta como usuario convencional
+
+	    $ firefox-install-pkcs11.sh
+
+	    Firefox te preguntará sobre la instalación de un nuevo módulo, aceptalo.
+
+	- Mozilla Thunderbird
+
+	    Para Instalar el módulo en Mozilla Thunderbird, ejecuta Tunderbird, ve
+	    al menú Editar-> Preferencias -> Advanced -> Manage Security Devices
+	    y haz click sobre la opción Load de la derecha, selecciona el módulo
+	    pkcs11 de la ruta en la que lo hayas instalado (por defecto /usr/local)
+	    y dale a aceptar.
+
+	    Otra forma de instalación más avanzada, para evitar que thunderbird te 
+	    pregunte por la contraseña al visualizar tus certificados y sólo lo haga
+	    al acceder a la llave privada es la siguiente:
+		- Ejecuta Mozilla Thunderbird.
+		- Haz click en la pestaña de herramientas y click nuevamente en consola JavaScript.
+		- Introduce la siguiente línea en el campo de texto "evaluar":
+		  
+		    pkcs11.addmodule("Modulo pkcs11 Clauer", "/usr/local/lib/libclauerpkcs11.so", 0x1<<28, 0);
+		    
+		  y pulsar enter. Esta línea le indica al firefox que instale el módulo pkcs11 
+		  que se encuentra en /usr/local/lib/libclauerpkcs11.so ( deberas cambiarlo si pasaste 
+		  --prefix al configure ), y que le ponga el flag PKCS11_PUB_READABLE_CERT_FLAG
+ 		  (0x1<<28) que indica que thunderbird no debe preguntar por la contraseña sino es
+		  para acceder a la llave privada.
+
+
+
+    Por Paúl Santapau Nebot.
+    santapau@sg.uji.es

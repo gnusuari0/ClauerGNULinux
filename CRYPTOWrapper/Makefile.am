@@ -1,0 +1,5 @@
+lib_LTLIBRARIES = libCRYPTOWrap.la
+libCRYPTOWrap_la_SOURCES = CRYPTOWrap.c CRYPTOWrap.h
+
+INCLUDES = -O4 -fPIC -DLINUX # -DDEBUG
+LIBADD = -L @LIB_SSLPATH@ -lssl -lcrypto 

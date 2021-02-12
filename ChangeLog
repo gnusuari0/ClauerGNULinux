@@ -1,0 +1,395 @@
+
+  * ClauerLinux 3.0.4 (17-02-09)
+
+      Clauer Manager for Linux packages
+
+  * ClauerLinux 3.0.3 (18-11-08)
+
+       LIBIMPORT: 
+            
+           Añadida alguna función extra para compatibilidad con componente ffox
+           
+       pkcs#11: 
+          
+           Establece FriendlyName a FIRMA/CIFRADO ante un C_CreateObject.
+
+       clos:
+
+           El fichero de configuración se instala/desinstala correctamente.
+
+
+  * ClauerLinux 3.0.2 (08-10-08)
+ 
+       clos:
+
+          Implementada función de formateo de partición criptogáfica 
+          en linux.
+ 
+          Implementada función de retorno de versión y tipo del software del clauer 
+          instalado en la máquina. El tipo puede ser utilizado por aplicaciones 
+          externas y se lee directamente del fichero de configuración del clos.
+
+          Implementado análisis de fichero de configuración, por el momento con estos 
+          valores: 
+
+	      type= 1          #indica el tipo de software. 
+	      version= 3.0.2   #indica la versión actual del clauer.
+
+
+       clauer-utils: 
+           
+          Corregidos bugs menores. 
+
+                   
+
+  * ClauerLinux 3.0.1 (22-11-07)
+       
+         Corregido bug en pkcs11. Si un certificado se encontraba en el 
+         bloque posición 0 del clauer, éste lo ignoraba.  
+ 
+  * ClauerLinux 3.0.0 (03-07-07)
+  
+         Mejoras generales de estabilidad, unificación de versiones 
+         para Windows/Linux/Mac.
+
+  * ClauerLinux 1l ( 14-05-07 )
+ 
+         pkcs#11: 
+             
+               Corregido bug al tratar con algunos certificados con serial 
+               number de más de 4 bytes.
+
+ 	clauer-utils.
+		
+ 	       fclauer:
+			
+		   Corregido bug al formatear la partición sdX1, en algunas  
+                   distribuciones daba error al desmontar el dispositivo.
+  
+  * ClauerLinux 1k ( 27-04-07 )
+ 
+          General: 
+
+               Mejoras notables en la gestión de las conexiones 
+               TCP/IP en concreto, eliminación de los estados 
+               TIME_WAIT y CLOSE_WAIT.
+
+          
+
+  * ClauerLinux 1j ( 23-01-07  )
+
+          pkcs#11:
+
+                Implementados mecanismos:
+                        CKM_SHA1_RSA_PKCS
+                        CKM_RSA_PKCS_KEY_PAIR_GEN.
+
+                Implementadas funciones:
+                         C_VerifyInit
+                         C_Verify
+
+                Añadido también fichero leeme en el package.
+
+
+  * ClauerLinux 1i ( 13-10-06  )
+         
+           Clauer-utils:
+	      
+	        climport:: Implementa todos los modos de cifrado de llaves (EXPERIMENTAL)
+		clls::     Muestra los bloques de tipos desconocidos e implementa un nuevo
+		           modo de listado raw.
+
+	   clos:
+	   
+	        Corregido bug de sincronización de caché..
+
+
+
+
+  * ClauerLinux 1h ( 29-09-06  )
+         
+           Clauer-utils:
+	      
+	        Soporte multilenguaje para Español, Catalan e Inglés.
+
+	   clos:
+	   
+	        Mejoras de gestion de errores.
+
+	
+	   Recompilado en MAC.
+	      
+       
+
+    
+  * ClauerLinux 1g ( 10-08-2006 )
+
+	    pkcs11:
+
+		Implementada la función C_CreateObject y de cálculo del 
+		identificador de llaves y certificados basado en el sha1 
+		del módulo de la llave por compatibilidad con Mozilla.
+		
+		Mediante esta implementación es posible que Mozilla genere
+		llaves y las almacene en el clauer directamente así como 
+		posteriormente su/s certificado asociado/s.
+
+
+  * ClauerLinux 1f ( 26-07-2006 )
+
+	    clos:
+		
+		Corregido error en el comportamiento frente a errores de chaché.
+		
+		Mejorado el script rc de inicio.
+    
+  * ClauerLinux 1e ( 25-07-2006 )
+
+	    clos:
+		
+		AÃ±adida opción del socket SO_REUSEADDR para que omita la comprobación
+		de conexiones en TIME_WAIT cuando hace bind.
+
+	    clauer-utils:
+		
+		Corrección de algunos errores, aÃ±adidos códigos de error al salir 
+		e implementadas las opciones para facilitar passwords desde la línea
+		de comandos de modo no seguro.
+
+	    libRT:
+	    
+		AÃ±adidas llamadas a Regenerar Cache antes de realizar escrituras.
+
+
+  * ClauerLinux 1d
+    
+		Primera compilaciÃ³n en Mac con procesadores Power Pc, a pesar de 
+		no dar soporte oficial, el código es compilble en este tipo de 
+		máquinas, el objetivo de esto es dar soporte para los actuales 
+		Mac-intel.
+
+	LIBRT:
+		
+		Mejora de implementación de gestión de caché.
+
+	pkcs\#11:
+	
+		Corregido error en LoadClauerObjects que daba SIGSEGV.
+    
+  * ClauerLinux 1c
+	
+	clos: 
+		Corregidos problemas de detección de dispositivos por el uso de 
+		la cachÃ©.
+	
+  * ClauerLinux 1b ( 09-06-06 )
+
+        clos:
+	   
+		Añadido soporte redhat para el script de instalación.  ( gracias la parche de José Traver )
+
+ 
+  * ClauerLinux 1a ( 06-06-06 )
+	
+	clos: 
+		Mejorada la detección de dispositivos conectados al
+ 		sistema.
+	
+	Corregidos varios bugs menores.
+	
+  * ClauerLinux 1 ( 26-05-2006 )
+	 
+	  Primera versión estable.
+         
+	  clos:
+	  
+		Implementadas opciones -h, -c y -f, hacer clos -h 
+		para ver su significado.
+	  
+          fclauer:
+		Corregidos varios problemas con formateo y automount.          
+  
+	  clauer-utils:
+
+		Corregidos varios errores e implementación de opciones en las 
+		utilidades.
+	    
+	  pkcs11:
+	  
+	    clauer.cpp:
+		    
+		Corregido bug en la detecciÃ³n del cambio de clauer :: getRSAKey().
+	 
+
+  * ClauerLinux 0.1f ( 03-05-2005 ) 
+		
+	clauer-utils:
+	    
+	    misc.c:
+ 	
+		Ahora muestra como propietario el Subject del primer certificado
+		que encuentra en el clauer.
+		
+	
+	pkcs#11:
+            clauer.cpp:
+
+                Cambiado valor de macro en if OPENSSL_VERSION_NUMBER al de la
+                versiÃ³n openssl-0.9.7j, la última versión que no pasa
+                parámetro 2 de la función i2d_X509 como const.
+
+
+	clauer-utils:
+		
+	    fclauer:
+		  
+		Corregido error al introducir passwords que contienen espacios.
+	
+	clos:
+		Adaptados tipos long para compatibilidad 64 bits.
+ 
+	libRT:
+		Adaptados tipos long para compatibilidad 64 bits.
+		
+	clio:
+		Añadida biblioteca clio de entrada/salida.
+	
+	configure.in: 
+		
+		Añadido flag ( --enable-64 ) para 64 bits que realiza un 
+		setup de compilaciÃ³n para arquitecturas IAx86_64 
+		
+
+		
+  * ClauerLinux 0.1e ( 06-04-2006 )
+    
+	clauer-utils:
+	    
+	    clpasswd:
+		
+		Corregido problema de liberación de memoria 
+		por el cual sucedia un SIGSEV.
+	
+	clos:
+	    
+	    Corregido error de cambio de password: Si en una misma sesión, se realizaba
+	    más de un cambio de password, siendo el nuevo password de tamaño superior al
+	    password anterior, se daba un error en la liberación de memoria.
+
+	pkcs11:
+	
+	    Ahora permitimos sesiones R/W para poder cambiar la password. Por tanto 
+	    desde el menú:  
+
+		Edit->preferences->Security Devices->Clauer USB Token 
+
+	    podemos cambiar la password.
+	
+
+  * ClauerLinux 0.1d ( 04-04-2006 )
+    
+	clauer-utils:
+	
+	    climport:
+	
+		Corregido problema en liberación de memoria, daba SIGSEGV
+		si había más de un clauer en el sistema.
+	
+	pkcs11:
+	    
+		Corregido bug al realizar la firma por el cual fallaba el proceso
+ 		de firma al tener mÃ¡s de un clauer conectado en el sistema.
+		
+		Incluido soporte para libcrypto.so.0.9.8 mediante 
+		#if (OPENSSL_VERSION_NUMBER <=  0x0090707fL);
+
+		Corregido bug al pedir la password, ademÃ¡s de no volver a preguntar 
+		la password al introducir una password incorrecta, si despues de 
+		introducir una password incorrecta se introducia la correcta, el proceso
+		de firma fallaba.
+
+	CRYPTOWrapper:
+		
+		Corregido error al situar el Friendly Name en el bloque del certificado
+		correspondiente.
+	
+		Corregidos warnings de compilación por casting de tipos.
+
+
+  * ClauerLinux 0.1c ( 03-04-2006 )
+    
+	clauer-utils:
+	
+	    Portada la LIBIMPORT a Linux, implementada al utilidad climport
+	    para importar pkcs12 al clauer desde Linux. 
+
+
+  * ClauerLinux 0.1b
+
+	
+	firefox-install-pkcs11.sh:
+	    
+	    Modificado parámetro de instalación, ahora no pide la password del 
+	    Clauer para ver los certificados, sino que lo hace únicamente al
+	    utilizar la llave privada.
+
+	
+	README:
+	    
+	    AÃ±adidas nuevas instrucciones de instalaciÃ³n para mozilla-thunderbird,
+	    de forma que el pkcs11 solicite la contraseÃ±a Ãºnicamente frente a usos 
+	    de la llave privada.
+    
+	
+	Corregidos algunos errores de la instalación:
+	    fclauer -> no encontraba mkfscrypto a pesar de estar instalado
+	    Algunos ejecutable, como clos, deben estar en sbin.
+
+  	
+	Configure.in:
+	    
+	    Ahora checkea también que este instalada la librería pthreads
+	    dados el nuevo sistema de detección de clauers conectados 
+	    del pkcs11 en el cual esa tarea la lleva un thread.
+	   
+ 
+	pkcs11:
+	    
+	    Modificada la detección de clauers conectados a la máquina,
+	    se pasa de chequeo frente a uso de objetos a chequeo 
+	    mediante un timer que comprueba la existencia de un clauer
+	    conectado a la mÃ¡quina cada n segundos.
+	    
+	    También se ha cambiado la filosofía frente a los slots, antes 
+	    un slot tenía siempre un token presente y se devolvian objetos 
+	    en función de si este estaba realmente conectado o no. Ahora 
+	    cuando no existe clauer conectado a la máquina, el slot pasa
+	    a no tener token presente.
+	    
+	    Corregidos timeouts en las conexiones por culpa de iniciar dispositivo
+	    sin finalizarlo.
+	    
+	    En esta versión insertamos también objetos llave pública a pesar de 
+	    poder extraerse del certificado, ya que para que firefox sepa que 
+	    dispone del certificado y las dos llaves sin pedir contraseña, es 
+	    necesario que "encuentre" tres objetos (certificado, llave pública
+	    y llave privada) con el mismo CKA_ID.
+	    
+
+	clos:
+	    
+	    Un error en la programación hacía que clos no mostrara su pid 
+	    por la salida estandar al ser ejecutado y que por tanto el 
+	    /etc/init.d/clos no funcionara frente a un stop, ya que 
+ 	    /var/run/clos.pid no contenía el pid del clos en ejecución.
+	    
+	    Ahora acepta sólo conexiones locales.
+
+
+	clauer-utils:
+	    
+	    mkfscrypto:
+		Corregidos problemas de formateo de ficheros en vez de 
+		dispositivos de bloques.
+    
+

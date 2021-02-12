@@ -1,0 +1,11 @@
+*~
+*.so
+*.a
+*.la
+*.log
+*.bin
+Makefile
+*.tar
+*.gz
+*.tar.gz
+*.zip
