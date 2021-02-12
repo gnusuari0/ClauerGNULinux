@@ -1,6 +1,8 @@
 *~
 *.so
 *.a
+*.o
+*.lo
 *.la
 *.log
 *.bin
@@ -9,3 +11,16 @@ Makefile
 *.gz
 *.tar.gz
 *.zip
+*.status
+.deps
+.libs
+cldel
+clexport
+climport
+clls
+clmakefs
+clpasswd
+clview
+clwblock
+clos/clos
+libtool
